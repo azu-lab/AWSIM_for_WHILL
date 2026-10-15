@@ -53,12 +53,25 @@ namespace Awsim.DreamerV3
             + "The topic is VOLATILE, so a client started after AWSIM only receives later messages.")]
         float _goalPublishInterval = 1.0f;
         
+        [Header("Episode settings over ROS 2 (map frame, same as /ground_truth/odom)")]
+        [SerializeField, Tooltip("geometry_msgs/Pose of base_link for the next resets. z is ignored: the vehicle keeps the height of its scene placement.")]
+        string _startPoseTopic = "/awsim/episode/start_pose";
+        [SerializeField, Tooltip("geometry_msgs/Point: moves the goal object (x, y; its height is kept).")]
+        string _goalTopic = "/awsim/episode/goal";
+        
         [Header("Debug")]
         [SerializeField] bool _enableDebugLogs = true;
         
         private ISubscription<std_msgs.msg.Bool> _resetCommandSub;
         private IPublisher<std_msgs.msg.Bool> _resetResponsePub;
         private IPublisher<geometry_msgs.msg.Point> _goalPositionPub;
+        private ISubscription<geometry_msgs.msg.Pose> _startPoseSub;
+        private ISubscription<geometry_msgs.msg.Point> _goalSub;
+        private readonly object _episodeLock = new object();
+        private geometry_msgs.msg.Pose _pendingStartPose;
+        private geometry_msgs.msg.Point _pendingGoal;
+        // base_link (GroundTruthPublisher) relative to the vehicle root, captured at start
+        private Vector3 _baseLinkOffset = Vector3.zero;
         private bool _isInitialized = false;
         private bool _initialPoseCaptured = false;
         private bool _goalPositionPublished = false;
@@ -150,6 +163,14 @@ namespace Awsim.DreamerV3
                 }
             }
             
+            if (_wheelchairTransform != null)
+            {
+                var baseLink = _wheelchairTransform.GetComponentInChildren<GroundTruthPublisher>(true);
+                if (baseLink != null)
+                    _baseLinkOffset = Quaternion.Inverse(_wheelchairTransform.rotation)
+                        * (baseLink.transform.position - _wheelchairTransform.position);
+            }
+            
             // Try to initialize ROS 2 in Start
             TryInitializeRos2();
         }
@@ -161,6 +182,8 @@ namespace Awsim.DreamerV3
             {
                 TryInitializeRos2();
             }
+            
+            ApplyPendingEpisodeSettings();
             
             // Publish the goal position after ROS 2 is initialized, then periodically and on every reset.
             bool goalDue = !_goalPositionPublished
@@ -230,7 +253,16 @@ namespace Awsim.DreamerV3
                 if (_goalObject != null)
                 {
                     _goalPositionPub = AwsimRos2Node.CreatePublisher<geometry_msgs.msg.Point>(_goalPositionTopic);
+                    _goalSub = AwsimRos2Node.CreateSubscription<geometry_msgs.msg.Point>(_goalTopic, msg =>
+                    {
+                        lock (_episodeLock) _pendingGoal = msg;
+                    });
                 }
+                
+                _startPoseSub = AwsimRos2Node.CreateSubscription<geometry_msgs.msg.Pose>(_startPoseTopic, msg =>
+                {
+                    lock (_episodeLock) _pendingStartPose = msg;
+                });
                 
                 _isInitialized = true;
                 
@@ -250,6 +282,45 @@ namespace Awsim.DreamerV3
                 {
                     Debug.LogError($"[EnvironmentReset] Initialization error: {e.Message}");
                 }
+            }
+        }
+        
+        /// <summary>
+        /// Apply start pose / goal received over ROS 2 (main thread).
+        /// The start pose takes effect at the next reset; the goal moves immediately.
+        /// </summary>
+        void ApplyPendingEpisodeSettings()
+        {
+            geometry_msgs.msg.Pose startPose;
+            geometry_msgs.msg.Point goal;
+            lock (_episodeLock)
+            {
+                startPose = _pendingStartPose;
+                goal = _pendingGoal;
+                _pendingStartPose = null;
+                _pendingGoal = null;
+            }
+            
+            if (startPose != null && _wheelchairTransform != null)
+            {
+                var rotation = Ros2Utility.Ros2ToUnityRotation(startPose.Orientation);
+                var baseLink = Ros2Utility.Ros2ToUnityPosition(startPose.Position);
+                var root = baseLink - rotation * _baseLinkOffset;
+                root.y = _initialPosition.y;   // keep the height of the scene placement
+                _initialPosition = root;
+                _initialRotation = rotation;
+                _initialPoseCaptured = true;
+                if (_enableDebugLogs)
+                    Debug.Log($"[EnvironmentReset] Start pose set: root={_initialPosition} rot={_initialRotation.eulerAngles}");
+            }
+            
+            if (goal != null && _goalObject != null)
+            {
+                var p = Ros2Utility.Ros2ToUnityPosition(goal);
+                _goalObject.position = new Vector3(p.x, _goalObject.position.y, p.z);
+                _goalPositionPublished = false;
+                if (_enableDebugLogs)
+                    Debug.Log($"[EnvironmentReset] Goal moved to Unity {_goalObject.position}");
             }
         }
         
@@ -472,6 +543,14 @@ namespace Awsim.DreamerV3
             if (_goalPositionPub != null)
             {
                 AwsimRos2Node.RemovePublisher<geometry_msgs.msg.Point>(_goalPositionPub);
+            }
+            if (_goalSub != null)
+            {
+                AwsimRos2Node.RemoveSubscription<geometry_msgs.msg.Point>(_goalSub);
+            }
+            if (_startPoseSub != null)
+            {
+                AwsimRos2Node.RemoveSubscription<geometry_msgs.msg.Pose>(_startPoseSub);
             }
         }
     }
