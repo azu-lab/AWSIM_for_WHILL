@@ -1,0 +1,39 @@
+# Environment of the "obstacle_avoidance" task (ObstacleAvoidanceEnv).
+# Values are the defaults of rl/awsim_dreamerv3/obstacle_avoidance_config.py
+# (= soturon/optimize e91b33f). Copy this file to make a variant of the experiment.
+task: obstacle_avoidance
+
+action:                      # action in [-1, 1]^2 is scaled to these limits
+  max_linear_vel: 0.3        # [m/s]   linear.x = clip(a0 * max, 0, max)   (forward only)
+  max_angular_vel: 0.6       # [rad/s] angular.z = clip(a1 * max, -max, max)
+
+episode:
+  timeout_sec: 30.0          # wall-clock seconds -> truncated
+  step_duration: 0.1         # [s] nominal control period (a step waits for the next camera frame)
+  # Start pose of base_link in the map frame, sent to AWSIM before every reset
+  # (/awsim/episode/start_pose). Omit to keep the scene placement:
+  # start_pose: {x: -0.33, y: 0.31, yaw: 1.68}   # [m], [m], [rad] (= the scene placement)
+
+goal:
+  radius: 0.5                # [m] success when the 2D distance to the goal is below this
+  # Move the goal object (/awsim/episode/goal). Omit to keep the scene placement:
+  # position: {x: -0.56, y: 4.46}
+  # Used only when /awsim/goal_position has not been received:
+  # goal = initial position + this offset along ROS y
+  fallback_offset_ros_y: 4.5
+
+reward:                      # r = goal + collision + progress_scale * (d_prev - d) + time
+  goal: 100.0
+  collision: -50.0
+  progress_scale: 30.0       # per meter of distance to the goal gained
+  time: -0.05                # per step
+
+topics:
+  camera: /sensing/camera/traffic_light/image_raw
+  odom: /ground_truth/odom
+  collision: /collision_sensor
+  cmd_vel: /whill/controller/cmd_vel
+  gear_cmd: /control/command/gear_cmd
+  reset_command: /reset_command
+  reset_response: /reset_response
+  goal_position: /awsim/goal_position

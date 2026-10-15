@@ -1,0 +1,24 @@
+# DreamerV3 (third_party/dreamerv3 @ b65cf81) pins jax[cuda12]==0.4.33 and
+# nvidia-cuda-nvcc-cu12<=12.2. The ptxas of CUDA 12.2 does not support Blackwell
+# GPUs (RTX 50xx, sm_120) and JAX fails with "ptxas too old"; ptxas 12.9 works with
+# jax 0.4.33 (tested on an RTX 5090), so only nvcc is newer than upstream.
+jax[cuda12]==0.4.33
+nvidia-cuda-nvcc-cu12==12.9.86
+numpy==1.26.4
+chex==0.1.90
+einops==0.8.2
+elements==3.22.4
+granular==0.24.1
+jaxtyping==0.3.7
+ninjax==3.6.3
+optax==0.2.5
+portal==3.8.1
+scope==0.7.1
+tqdm==4.70.1
+av==17.1.0
+colored_traceback==0.4.2
+ruamel.yaml==0.19.1
+gymnasium==1.4.0
+tensorboard==2.18.0
+# elements.logger.TensorBoardOutput imports tensorflow (CPU build: does not touch the GPU used by JAX)
+tensorflow-cpu==2.18.0
