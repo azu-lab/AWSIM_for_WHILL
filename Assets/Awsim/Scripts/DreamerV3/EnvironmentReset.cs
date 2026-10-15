@@ -49,6 +49,9 @@ namespace Awsim.DreamerV3
         [Header("Goal Settings (Optional)")]
         [SerializeField] Transform _goalObject;
         [SerializeField] string _goalPositionTopic = "/awsim/goal_position";
+        [SerializeField, Tooltip("Seconds between re-publications of the goal position (0 = only at start and on reset). "
+            + "The topic is VOLATILE, so a client started after AWSIM only receives later messages.")]
+        float _goalPublishInterval = 1.0f;
         
         [Header("Debug")]
         [SerializeField] bool _enableDebugLogs = true;
@@ -59,6 +62,7 @@ namespace Awsim.DreamerV3
         private bool _isInitialized = false;
         private bool _initialPoseCaptured = false;
         private bool _goalPositionPublished = false;
+        private float _nextGoalPublishTime = 0f;
         
         // Captured from scene placement in Awake() - NOT serialized
         private Vector3 _initialPosition;
@@ -158,8 +162,10 @@ namespace Awsim.DreamerV3
                 TryInitializeRos2();
             }
             
-            // Publish goal position once after ROS 2 is initialized
-            if (_isInitialized && !_goalPositionPublished && _goalObject != null && _goalPositionPub != null)
+            // Publish the goal position after ROS 2 is initialized, then periodically and on every reset.
+            bool goalDue = !_goalPositionPublished
+                || (_goalPublishInterval > 0f && Time.unscaledTime >= _nextGoalPublishTime);
+            if (_isInitialized && goalDue && _goalObject != null && _goalPositionPub != null)
             {
                 var unityPos = _goalObject.position;
                 // Unity → ROS coordinate conversion: ROS(x,y,z) = Unity(z, -x, y)
@@ -168,9 +174,11 @@ namespace Awsim.DreamerV3
                 goalMsg.Y = -unityPos.x;
                 goalMsg.Z = unityPos.y;
                 _goalPositionPub.Publish(goalMsg);
+                _nextGoalPublishTime = Time.unscaledTime + _goalPublishInterval;
+                bool firstTime = !_goalPositionPublished;
                 _goalPositionPublished = true;
                 
-                if (_enableDebugLogs)
+                if (_enableDebugLogs && firstTime)
                 {
                     Debug.Log($"[EnvironmentReset] Published goal position: Unity({unityPos}) → ROS({goalMsg.X:F3}, {goalMsg.Y:F3}, {goalMsg.Z:F3})");
                 }
@@ -184,6 +192,7 @@ namespace Awsim.DreamerV3
                 try
                 {
                     ResetEnvironment();
+                    _goalPositionPublished = false;   // re-publish the goal with the new episode
                     
                     // Publish response
                     if (_resetResponsePub != null)
