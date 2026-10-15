@@ -370,7 +370,10 @@ namespace Awsim.WhillModelCR.Editor
                     case SerializedPropertyType.Integer: v = it.longValue.ToString(CultureInfo.InvariantCulture); break;
                     case SerializedPropertyType.Boolean: v = it.boolValue ? "true" : "false"; break;
                     case SerializedPropertyType.Enum: v = it.intValue.ToString(CultureInfo.InvariantCulture); break;
-                    case SerializedPropertyType.String: v = $"\"{Escape(it.stringValue)}\""; break;
+                    case SerializedPropertyType.String:
+                        v = $"\"{Escape(it.stringValue)}\"";
+                        enterChildren = false;   // do not expand the characters of the string
+                        break;
                     case SerializedPropertyType.LayerMask: v = it.intValue.ToString(CultureInfo.InvariantCulture); break;
                     case SerializedPropertyType.ObjectReference:
                         v = it.objectReferenceValue == null ? "null" : $"\"{Escape(it.objectReferenceValue.name)}\"";
