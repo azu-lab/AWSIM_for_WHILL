@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// 重心（Center of Mass）を可視化するデバッグスクリプト
-/// Rigidbodyがアタッチされたオブジェクト（ModelCiなど）に追加してください
+/// Rigidbodyがアタッチされたオブジェクト（WhillModelCRなど）に追加してください
 /// </summary>
 public class CoMVisualizer : MonoBehaviour
 {
