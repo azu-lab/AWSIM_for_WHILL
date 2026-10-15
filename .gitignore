@@ -72,3 +72,14 @@ crashlytics-build.properties
 # JetBrains
 /.idea/
 
+
+# AWSIM for WHILL: generated files
+/logs/
+/data/
+/outputs/
+__pycache__/
+*.pyc
+# default outputs of python3 -m whill_optimizer (written to the current directory)
+/optuna_study.db
+/optimization_results.json
+/visualization/

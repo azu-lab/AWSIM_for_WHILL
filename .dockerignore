@@ -1,0 +1,4 @@
+# Only the requirement files are needed to build the images.
+*
+!optimizer/requirements.txt
+!rl/requirements.txt
