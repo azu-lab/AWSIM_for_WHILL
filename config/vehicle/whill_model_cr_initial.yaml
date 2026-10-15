@@ -1,0 +1,18 @@
+# WHILL Model CR - initial parameters of the optimization (trial 0).
+# Source: soturon/optimize parameter/shoki_v2.yaml (e91b33f).
+# Identical to trial #0 of the Optuna study 3scenario_v2.db.
+# These are the 'default' values of config/optimizer/search_space.yaml.
+vehicle_params:
+    skidding_cancel_rate: 1.0
+    front_wheel_skidding_rate: 0.1
+    forward_slip_multiplier: 1.0
+    wheel_kp: 10.0
+    wheel_ki: 0.0
+    wheel_kd: 0.0
+    wheel_integral_clamp: 0.5
+    air_drag: 0.2
+    rolling_resistance: 0.02
+    frontal_area: 0.8
+    com_offset_x: 0.0
+    com_offset_y: 0.0
+    com_offset_z: 0.0

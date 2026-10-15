@@ -1,0 +1,15 @@
+# Source: soturon/optimize parameter/cricle_v2.yaml (e91b33f). Result of one optimization run.
+vehicle_params:
+    skidding_cancel_rate: 35.79035805533129
+    front_wheel_skidding_rate: 0.4269181443087132
+    forward_slip_multiplier: 0.673762128222658
+    wheel_kp: 26.009720318930373
+    wheel_ki: 0.8507266252344604
+    wheel_kd: 0.07691778585761239
+    wheel_integral_clamp: 2.375120127684481
+    air_drag: 0.7724876735445579
+    rolling_resistance: 0.02696600977414692
+    frontal_area: 0.6760773832663306
+    com_offset_x: -0.10867035425436468
+    com_offset_y: 0.269191597409274
+    com_offset_z: -0.16692114395682514

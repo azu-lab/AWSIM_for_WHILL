@@ -1,0 +1,15 @@
+# Source: soturon/optimize parameter/straight_and_circle.yaml (e91b33f). Result of one optimization run.
+vehicle_params:
+    skidding_cancel_rate: 47.76450415672176
+    front_wheel_skidding_rate: 0.0002842781896170432
+    forward_slip_multiplier: 0.7337682191101931
+    wheel_kp: 26.753903522562105
+    wheel_ki: 0.14880325747091225
+    wheel_kd: 0.3974869534146418
+    wheel_integral_clamp: 0.4338810393931261
+    air_drag: 1.1216414230360907
+    rolling_resistance: 0.0008360995107391938
+    frontal_area: 0.8194967004502478
+    com_offset_x: 0.0010244164244892413
+    com_offset_y: 0.13524132612165324
+    com_offset_z: -0.25556511279674016

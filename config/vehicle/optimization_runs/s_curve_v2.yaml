@@ -1,0 +1,15 @@
+# Source: soturon/optimize parameter/s_curve_v2.yaml (e91b33f). Result of one optimization run.
+vehicle_params:
+    skidding_cancel_rate: 49.93309820205441
+    front_wheel_skidding_rate: 2.6172754898282844
+    forward_slip_multiplier: 0.6754915704455506
+    wheel_kp: 29.957991319228654
+    wheel_ki: 0.6869420609050799
+    wheel_kd: 0.6471065691680198
+    wheel_integral_clamp: 2.5535049117989645
+    air_drag: 0.4466597314088465
+    rolling_resistance: 0.0016396288333431748
+    frontal_area: 0.5421314890037304
+    com_offset_x: -0.04890112383301807
+    com_offset_y: 0.23385809316626877
+    com_offset_z: -0.2297683931325236

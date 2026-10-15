@@ -1,0 +1,18 @@
+# WHILL Model CR - best parameters of the 3-scenario optimization (straight, turn, circle).
+# Source: soturon/optimize parameter/3senario_v2.yaml (e91b33f).
+# Optuna study 3scenario_v2.db: 500 trials (488 complete, 12 pruned), best = trial #426,
+# objective = sum of trajectory RMSE over the 3 scenarios = 0.0899 m (trial 0: 1.411 m).
+vehicle_params:
+    skidding_cancel_rate: 33.554506316337196
+    front_wheel_skidding_rate: 1.1052156686814074
+    forward_slip_multiplier: 0.8068367831024831
+    wheel_kp: 27.817413826857553
+    wheel_ki: 0.8199443120560803
+    wheel_kd: 1.002645799676464
+    wheel_integral_clamp: 0.258094278193412
+    air_drag: 0.4388445534734844
+    rolling_resistance: 0.004417808075033843
+    frontal_area: 0.9718793797540385
+    com_offset_x: 0.0048921144146806496
+    com_offset_y: 0.1438175391347506
+    com_offset_z: -0.2666117158114921

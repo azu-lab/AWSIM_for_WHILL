@@ -1,0 +1,25 @@
+# WHILL Model CR - parameters in effect in the default scene
+# (Assets/Awsim/Scenes/AutowareSimulationDemo.unity / WhillModelCR.prefab).
+#
+# Same as soturon/optimize e91b33f, the state used for all its later experiments
+# (including the DreamerV3 training). Read back from a running AWSIM with
+#   python3 -m whill_optimizer get-params
+# (values below are the serialized ones; get-params prints them as float32).
+#
+# 11 values come from the 3-scenario study (whill_model_cr_optimized_3scenario_v2.yaml);
+# skidding_cancel_rate and front_wheel_skidding_rate come from an older study
+# (soturon saitekika.yaml). See docs/VEHICLE_MODEL.md.
+vehicle_params:
+  skidding_cancel_rate: 10.24398
+  front_wheel_skidding_rate: 0.14087
+  forward_slip_multiplier: 0.8068368
+  wheel_kp: 27.81741
+  wheel_ki: 0.8199443
+  wheel_kd: 1.002646
+  wheel_integral_clamp: 0.2580943
+  air_drag: 0.4388446
+  rolling_resistance: 0.004417808
+  frontal_area: 0.9718794
+  com_offset_x: 0.0048921145
+  com_offset_y: 0.14381754
+  com_offset_z: -0.26661173
