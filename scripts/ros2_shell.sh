@@ -14,6 +14,10 @@ TTY_ARGS=()
 [[ -t 0 && -t 1 ]] && TTY_ARGS=(-it)
 GPU_ARGS=()
 [[ "${IMAGE}" == *dreamer* ]] && GPU_ARGS=(--gpus all)
+# Pass JAX / XLA settings through when they are set on the host.
+for v in XLA_FLAGS XLA_PYTHON_CLIENT_MEM_FRACTION JAX_PLATFORMS; do
+    [[ -n "${!v:-}" ]] && GPU_ARGS+=(-e "${v}=${!v}")
+done
 if [[ $# -eq 0 ]]; then
     set -- bash
 fi
