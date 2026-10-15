@@ -500,6 +500,7 @@ class BatchEvaluator:
     def run(self, param_dir: str, output_prefix: str = "batch_eval"):
         """全パラメータ×全シナリオの評価を実行"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        Path(output_prefix).parent.mkdir(parents=True, exist_ok=True)
         
         try:
             # 初期化
