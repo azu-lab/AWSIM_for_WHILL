@@ -203,8 +203,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rigidbody: {fileID: 2886195142570798319}
-  _skiddingCancelRate: 10.24398
-  _frontWheelSkiddingRate: 0.14087
+  _skiddingCancelRate: 33.554504
+  _frontWheelSkiddingRate: 1.1052157
   _frontAxle:
     _leftWheel:
       _wheelCollider: {fileID: 3175533467972939808}
