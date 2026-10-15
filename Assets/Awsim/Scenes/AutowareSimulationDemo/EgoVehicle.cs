@@ -32,16 +32,16 @@ namespace Awsim.Scene.AutowareSimulationDemo
         [SerializeField] AccelVehicleKeyboardInput _keyboardVehicleInput;
         [SerializeField] AccelVehicleRos2Input _ros2VehicleInput;
         [SerializeField] AccelVehicleLogitechG29Input _logitechG29VehicleInput;
-        [SerializeField] AccelVehicleVisualEffect _vehicleVisualEffect;
+        //[SerializeField] AccelVehicleVisualEffect _vehicleVisualEffect;
 
         [Header("Ego vehicle sensor")]
-        [SerializeField] ImuSensor _imuSensor;
-        [SerializeField] ImuRos2Publisher _imuRos2Publisher;
+        //[SerializeField] ImuSensor _imuSensor;
+        //[SerializeField] ImuRos2Publisher _imuRos2Publisher;
         [SerializeField] CameraSensorScheduler _cameraSensorScheduler;
         [SerializeField] CameraSensor _cameraSensor;
         [SerializeField] CameraRos2Publisher _cameraRos2Publisher;
-        [SerializeField] GnssSensor _gnssSensor;
-        [SerializeField] GnssRos2Publisher _gnssRos2Publisher;
+        //[SerializeField] GnssSensor _gnssSensor;
+        //[SerializeField] GnssRos2Publisher _gnssRos2Publisher;
 
         public void Initialize(string logitechG29DevicePath, Vector3 initialVehiclePosition, Quaternion initialVehicleRotation)
         {
@@ -50,7 +50,7 @@ namespace Awsim.Scene.AutowareSimulationDemo
             _controlModeBasedVehicleInputter.Initialize();
             _controlModeSrvServer.Initialize();
             _vehicleReportRos2Publisher.Initialize();
-            _vehicleVisualEffect.Initialize();
+            //_vehicleVisualEffect.Initialize();
             _keyboardVehicleInput.Initialize();
             _ros2VehicleInput.Initialize();
             _logitechG29VehicleInput.Initialize(logitechG29DevicePath);
@@ -58,12 +58,12 @@ namespace Awsim.Scene.AutowareSimulationDemo
             _vehicleTransform.rotation = initialVehicleRotation;
 
             // Sensor.
-            _imuSensor.Initialize();
-            _imuRos2Publisher.Initialize();
+            //_imuSensor.Initialize();
+            //_imuRos2Publisher.Initialize();
             _cameraSensorScheduler.Initialize();
             _cameraRos2Publisher.Initialize();
-            _gnssSensor.Initialize();
-            _gnssRos2Publisher.Initialize();
+            //_gnssSensor.Initialize();
+            //_gnssRos2Publisher.Initialize();
         }
 
         public void Initialize()
@@ -73,18 +73,18 @@ namespace Awsim.Scene.AutowareSimulationDemo
             _controlModeBasedVehicleInputter.Initialize();
             _controlModeSrvServer.Initialize();
             _vehicleReportRos2Publisher.Initialize();
-            _vehicleVisualEffect.Initialize();
+            //_vehicleVisualEffect.Initialize();
             _keyboardVehicleInput.Initialize();
             _ros2VehicleInput.Initialize();
             _logitechG29VehicleInput.Initialize();
 
             // Sensor.
-            _imuSensor.Initialize();
-            _imuRos2Publisher.Initialize();
+            //_imuSensor.Initialize();
+            //_imuRos2Publisher.Initialize();
             _cameraSensorScheduler.Initialize();
             _cameraRos2Publisher.Initialize();
-            _gnssSensor.Initialize();
-            _gnssRos2Publisher.Initialize();
+            //_gnssSensor.Initialize();
+            //_gnssRos2Publisher.Initialize();
         }
 
         public void OnUpdate()
@@ -92,7 +92,7 @@ namespace Awsim.Scene.AutowareSimulationDemo
             // Vehicle.
             _controlModeBasedVehicleInputter.OnUpdate();
             _vehicle.OnUpdate();
-            _vehicleVisualEffect.OnUpdate();
+            //_vehicleVisualEffect.OnUpdate();
         }
 
         public void OnFixedUpdate()
@@ -102,7 +102,7 @@ namespace Awsim.Scene.AutowareSimulationDemo
             _vehicle.OnFixedUpdate();
 
             // Sensor.
-            _imuSensor.OnFixedUpdate();
+            //_imuSensor.OnFixedUpdate();
         }
     }
 }

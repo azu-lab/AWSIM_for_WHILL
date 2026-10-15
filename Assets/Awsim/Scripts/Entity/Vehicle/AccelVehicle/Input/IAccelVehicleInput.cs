@@ -32,6 +32,16 @@ namespace Awsim.Entity
 
         public bool SwitchAutonomous { get; }
 
+        /// <summary>
+        /// Target linear velocity for v/ω control (m/s).
+        /// </summary>
+        public float TargetLinearVelocity { get; }
+
+        /// <summary>
+        /// Target yaw rate for v/ω control (rad/s).
+        /// </summary>
+        public float TargetYawRate { get; }
+
         public bool UpdateInputs();     // TODO: It might be better to return overridden controls with enum instead of bool.
     }
 }

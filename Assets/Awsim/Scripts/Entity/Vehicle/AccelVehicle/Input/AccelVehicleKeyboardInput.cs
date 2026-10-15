@@ -40,6 +40,8 @@ namespace Awsim.Entity
         public TurnIndicators TurnIndicatorsInput { get; private set; }
         public HazardLights HazardLightsInput { get; private set; }
         public bool SwitchAutonomous { get; private set; }
+        public float TargetLinearVelocity => 0f;  // Keyboard input uses direct accel/steer, not velocity targets
+        public float TargetYawRate => 0f;
 
         [SerializeField] KeyCode _accelerationKey = KeyCode.UpArrow;
         [SerializeField] KeyCode _decelerationKey = KeyCode.DownArrow;
@@ -54,12 +56,12 @@ namespace Awsim.Entity
         [SerializeField] KeyCode _hazardSignalKey = KeyCode.Alpha3;
         [SerializeField] KeyCode _noneSignalKey = KeyCode.Alpha4;
         [SerializeField] KeyCode _switchAutonomousKey = KeyCode.C;
-        [SerializeField] Component _readonlyVehicleComponent = null;
-        IReadOnlyAccelVehicle _readonlyVehicle = null;
+        //[SerializeField] Component _readonlyVehicleComponent = null;
+        //IReadOnlyAccelVehicle _readonlyVehicle = null;
 
         public void Initialize()
         {
-            _readonlyVehicle = _readonlyVehicleComponent as IReadOnlyAccelVehicle;
+            //_readonlyVehicle = _readonlyVehicleComponent as IReadOnlyAccelVehicle;
         }
 
         public bool UpdateInputs()
@@ -109,8 +111,8 @@ namespace Awsim.Entity
                 GearInput = Gear.Reverse;
             else if (Input.GetKey(_neutralGearKey))
                 GearInput = Gear.Neutral;
-            else
-                GearInput = _readonlyVehicle.GearInput;
+            //else
+                //GearInput = _readonlyVehicle.GearInput;
 
             // Get turn signal.
             if (Input.GetKey(_leftTurnSignalKey))               // Left turn signal.
@@ -119,8 +121,8 @@ namespace Awsim.Entity
                 TurnIndicatorsInput = TurnIndicators.Right;
             else if (Input.GetKey(_noneSignalKey))              // None.
                 TurnIndicatorsInput = TurnIndicators.None;
-            else
-                TurnIndicatorsInput = _readonlyVehicle.TurnIndicatorsInput;
+            //else
+                //TurnIndicatorsInput = _readonlyVehicle.TurnIndicatorsInput;
 
             // Get hazard signal.
             if (Input.GetKeyDown(_hazardSignalKey))
@@ -130,8 +132,8 @@ namespace Awsim.Entity
                 else
                     HazardLightsInput = HazardLights.Enable;
             }
-            else
-                HazardLightsInput = _readonlyVehicle.HazardLightsInput;
+            //else
+                //HazardLightsInput = _readonlyVehicle.HazardLightsInput;
 
             return isOverridden;
         }

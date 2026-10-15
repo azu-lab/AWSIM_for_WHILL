@@ -44,7 +44,9 @@ namespace Awsim.UI
                 + "Turn indicators               : " + Vehicle.TurnIndicators + "\n"
                 + "Hazard lights                 : " + Vehicle.HazardLights + "\n"
                 + "Control mode                  : " + ControlModeBasedInputter.ControlMode + "\n"
-                + "Speed (m/s)                   : " + Vehicle.Speed + "\n";
+                + "Speed (m/s)                   : " + Vehicle.Speed + "\n"
+                + "Yaw rate (rad/s)              : " + Vehicle.AngularVelocity.y.ToString("F3")
+                + " (" + (Vehicle.AngularVelocity.y * Mathf.Rad2Deg).ToString("F1") + " deg/s)\n";
 
             _text.text = str;
         }

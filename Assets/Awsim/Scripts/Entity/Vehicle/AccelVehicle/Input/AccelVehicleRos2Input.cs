@@ -34,11 +34,16 @@ namespace Awsim.Entity
 
         public bool SwitchAutonomous { get; private set; } = false;
 
+        public float TargetLinearVelocity { get; private set; }
+
+        public float TargetYawRate { get; private set; }
+
         [SerializeField] string _turnIndicatorsCommandTopic = "/control/command/turn_indicators_cmd";
         [SerializeField] string _hazardLightsCommandTopic = "/control/command/hazard_lights_cmd";
         [SerializeField] string _ackermannControlCommandTopic = "/control/command/control_cmd";
         [SerializeField] string _gearCommandTopic = "/control/command/gear_cmd";
         [SerializeField] string _vehicleEmergencyStampedTopic = "/control/command/emergency_cmd";
+        [SerializeField] string _cmdVelTopic = "/whill/controller/cmd_vel";
         [SerializeField]
         QosSettings _qosSettings = new QosSettings(ReliabilityPolicy.QOS_POLICY_RELIABILITY_RELIABLE,
                                                    DurabilityPolicy.QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
@@ -51,12 +56,15 @@ namespace Awsim.Entity
         ISubscription<autoware_control_msgs.msg.Control> _ackermanControlCommandSubscriber;
         ISubscription<autoware_vehicle_msgs.msg.GearCommand> _gearCommandSubscriber;
         ISubscription<tier4_vehicle_msgs.msg.VehicleEmergencyStamped> _vehicleEmergencyStampedSubscriber;
+        ISubscription<geometry_msgs.msg.Twist> _cmdVelSubscriber;
 
         float _accelerationInput = 0;
         float _steerAngleInput = 0;
         Gear _gearInput = Gear.Parking;
         TurnIndicators _turnIndicatorsInput = TurnIndicators.None;
         HazardLights _hazardLightsInput = HazardLights.Disable;
+        float _targetLinearVelocity = 0f;
+        float _targetYawRate = 0f;
 
         public void Initialize()
         {
@@ -92,6 +100,14 @@ namespace Awsim.Entity
                 {
 
                 }, qos);
+
+            _cmdVelSubscriber
+                = AwsimRos2Node.CreateSubscription<geometry_msgs.msg.Twist>(_cmdVelTopic, msg =>
+                {
+                    // Twist: linear.x = forward velocity [m/s], angular.z = yaw rate [rad/s]
+                    _targetLinearVelocity = (float)msg.Linear.X;
+                    _targetYawRate = (float)msg.Angular.Z;
+                }, qos);
         }
 
         public bool UpdateInputs()
@@ -101,6 +117,8 @@ namespace Awsim.Entity
             GearInput = _gearInput;
             TurnIndicatorsInput = _turnIndicatorsInput;
             HazardLightsInput = _hazardLightsInput;
+            TargetLinearVelocity = _targetLinearVelocity;
+            TargetYawRate = _targetYawRate;
 
             return false;
         }

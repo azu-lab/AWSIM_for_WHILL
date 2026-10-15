@@ -154,7 +154,8 @@ namespace RGLUnityPlugin
             SynchronizeSceneTime();
 
             Profiler.BeginSample("Find changes and make TODO list");
-            var thisFrameGOs = new HashSet<GameObject>(FindObjectsOfType<GameObject>());
+            // Use FindObjectsByType with FindObjectsSortMode.None for performance and to avoid deprecated API.
+            var thisFrameGOs = new HashSet<GameObject>(UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None));
             thisFrameGOs.RemoveWhere(IsNotActiveOrParentHasLidar);
 
             // Added

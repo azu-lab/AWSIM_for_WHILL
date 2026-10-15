@@ -58,6 +58,8 @@ namespace Awsim.Entity
         public TurnIndicators TurnIndicatorsInput { get; private set; } = TurnIndicators.None;
         public HazardLights HazardLightsInput { get; private set; } = HazardLights.Disable;
         public bool SwitchAutonomous { get; private set; } = false;
+        public float TargetLinearVelocity => 0f;  // G29 uses direct accel/steer, not velocity targets
+        public float TargetYawRate => 0f;
         public bool Connected { get; private set; }
 
         [Header("Logitech G29 settings")]

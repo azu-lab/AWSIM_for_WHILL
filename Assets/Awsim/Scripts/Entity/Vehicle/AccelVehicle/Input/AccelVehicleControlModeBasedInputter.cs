@@ -70,7 +70,12 @@ namespace Awsim.Entity
             {
                 _vehicle.AccelerationInput = _autonomousInput.AccelerationInput;
                 _vehicle.SteerTireAngleInput = _autonomousInput.SteerAngleInput;
-                _vehicle.GearInput = _autonomousInput.GearInput;
+                _vehicle.TargetLinearVelocity = _autonomousInput.TargetLinearVelocity;
+                _vehicle.TargetYawRate = _autonomousInput.TargetYawRate;
+                if (_autonomousInput.GearInput != _vehicle.Gear)
+                {
+                    _vehicle.GearInput = _autonomousInput.GearInput;
+                }
                 _vehicle.TurnIndicatorsInput = _autonomousInput.TurnIndicatorsInput;
                 _vehicle.HazardLightsInput = _autonomousInput.HazardLightsInput;
             }
@@ -86,7 +91,12 @@ namespace Awsim.Entity
 
                 _vehicle.AccelerationInput = manuallyInput.AccelerationInput;
                 _vehicle.SteerTireAngleInput = manuallyInput.SteerAngleInput;
-                _vehicle.GearInput = manuallyInput.GearInput;
+                _vehicle.TargetLinearVelocity = manuallyInput.TargetLinearVelocity;
+                _vehicle.TargetYawRate = manuallyInput.TargetYawRate;
+                if (manuallyInput.GearInput != _vehicle.Gear)
+                {
+                    _vehicle.GearInput = manuallyInput.GearInput;
+                }
                 _vehicle.TurnIndicatorsInput = manuallyInput.TurnIndicatorsInput;
                 _vehicle.HazardLightsInput = manuallyInput.HazardLightsInput;
             }

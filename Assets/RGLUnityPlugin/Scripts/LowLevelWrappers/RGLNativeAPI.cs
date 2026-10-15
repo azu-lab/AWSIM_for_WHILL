@@ -254,7 +254,8 @@ namespace RGLUnityPlugin
                 return;
             }
 
-            RGLDebugger debugger = UnityEngine.Object.FindObjectOfType<RGLDebugger>(false);
+            // Use FindFirstObjectByType to avoid deprecated API and to find any instance quickly.
+            RGLDebugger debugger = UnityEngine.Object.FindFirstObjectByType<RGLDebugger>();
             if (debugger != null)
             {
                 ConfigureLogging(debugger.LogLevel, debugger.LogOutputPath);
