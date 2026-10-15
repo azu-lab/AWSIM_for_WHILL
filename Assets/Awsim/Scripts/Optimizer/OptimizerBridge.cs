@@ -35,6 +35,9 @@ namespace Awsim.Optimizer
     {
         [Header("Server Settings")]
         [SerializeField] private int _port = 50051;
+        [SerializeField, Tooltip("Address to listen on. 127.0.0.1 accepts local clients only; "
+            + "use 0.0.0.0 only on a trusted network (the protocol has no authentication).")]
+        private string _bindAddress = "127.0.0.1";
         [SerializeField] private bool _startOnAwake = true;
         
         [Header("Vehicle Reference")]
@@ -192,11 +195,11 @@ namespace Awsim.Optimizer
             
             try
             {
-                _listener = new TcpListener(IPAddress.Any, _port);
+                _listener = new TcpListener(IPAddress.Parse(_bindAddress), _port);
                 _listener.Start();
                 _isRunning = true;
                 
-                Debug.Log($"[OptimizerBridge] Server started on port {_port}");
+                Debug.Log($"[OptimizerBridge] Server started on {_bindAddress}:{_port}");
                 
                 // 接続待機を開始
                 Task.Run(() => AcceptClientsAsync(_cancellationTokenSource.Token));
@@ -313,6 +316,9 @@ namespace Awsim.Optimizer
                     
                     case "set_parameters":
                         return await HandleSetParametersAsync(request.params_json);
+
+                    case "get_parameters":
+                        return await HandleGetParametersAsync();
                     
                     case "reset_simulation":
                         return await HandleResetSimulationAsync(request.params_json);
@@ -387,6 +393,57 @@ namespace Awsim.Optimizer
             }
         }
         
+        private async Task<string> HandleGetParametersAsync()
+        {
+            try
+            {
+                var tcs = new TaskCompletionSource<ParameterSet>();
+                EnqueueMainThread(() => tcs.SetResult(ReadParameters()));
+                var p = await tcs.Task;
+                return CreateSuccessResponse("OK", JsonUtility.ToJson(p));
+            }
+            catch (Exception e)
+            {
+                return CreateErrorResponse($"GetParameters error: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Read the values currently used by the vehicle (inverse of ApplyParameters).
+        /// </summary>
+        private ParameterSet ReadParameters()
+        {
+            var p = new ParameterSet();
+            if (_accelVehicle == null)
+                return p;
+
+            var type = _accelVehicle.GetType();
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            p.skidding_cancel_rate = GetFieldValue(type, "_skiddingCancelRate", flags, p.skidding_cancel_rate);
+            p.front_wheel_skidding_rate = GetFieldValue(type, "_frontWheelSkiddingRate", flags, p.front_wheel_skidding_rate);
+            p.forward_slip_multiplier = GetFieldValue(type, "_forwardSlipMultiplier", flags, p.forward_slip_multiplier);
+            p.wheel_kp = GetFieldValue(type, "_wheelKp", flags, p.wheel_kp);
+            p.wheel_ki = GetFieldValue(type, "_wheelKi", flags, p.wheel_ki);
+            p.wheel_kd = GetFieldValue(type, "_wheelKd", flags, p.wheel_kd);
+            p.wheel_integral_clamp = GetFieldValue(type, "_wheelIntegralClamp", flags, p.wheel_integral_clamp);
+            p.air_drag = GetFieldValue(type, "_airDrag", flags, p.air_drag);
+            p.rolling_resistance = GetFieldValue(type, "_rollingResistance", flags, p.rolling_resistance);
+            p.frontal_area = GetFieldValue(type, "_frontalArea", flags, p.frontal_area);
+            if (_vehicleRigidbody != null)
+            {
+                p.com_offset_x = _vehicleRigidbody.centerOfMass.x;
+                p.com_offset_y = _vehicleRigidbody.centerOfMass.y;
+                p.com_offset_z = _vehicleRigidbody.centerOfMass.z;
+            }
+            return p;
+        }
+
+        private float GetFieldValue(Type type, string fieldName, System.Reflection.BindingFlags flags, float fallback)
+        {
+            var field = type.GetField(fieldName, flags);
+            return field != null ? (float)field.GetValue(_accelVehicle) : fallback;
+        }
+
         private void ApplyParameters(ParameterSet p)
         {
             if (_accelVehicle == null)
