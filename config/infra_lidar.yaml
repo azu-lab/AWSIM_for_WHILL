@@ -1,0 +1,33 @@
+# Infrastructure LiDARs of the corridor scene
+# (Assets/Awsim/Scenes/AutowareSimulationDemo.unity).
+#
+# This file is the source of truth. Apply it to the scene with
+#   scripts/setup_infra_lidar.sh
+# or, in the Unity Editor, "AWSIM for WHILL > Setup infrastructure LiDARs".
+# The tool replaces the scene object "InfraLidars" with the sensors below, so do
+# not edit them in the Inspector.
+#
+# Coordinates are Unity world coordinates [m] (x = right, y = up, z = forward).
+# /ground_truth/odom and /tf_static use the same world converted to ROS axes:
+#   ROS x = Unity z, ROS y = -Unity x, ROS z = Unity y.
+#
+# Each sensor publishes sensor_msgs/PointCloud2 in its own frame (frame_id) and the
+# pose parent_frame_id -> frame_id is published on /tf_static by InfraLidarTfPublisher.
+
+parent_frame_id: map
+
+infra_lidars:
+  - name: InfraLidar0
+    # Prefab: Assets/Awsim/Prefabs/Entity/EgoVehicle/Sensor/Lidars/Hdrp/<model>.prefab
+    # (VelodyneVLP16, VelodyneVLP32C, VelodyneVLS128, OusterOS1-64, HesaiPandarXT32, ...)
+    model: OusterOS1-64
+    # At the end of the corridor behind the goal, 2.5 m above the floor
+    # (floor top is at Unity y = -0.85), looking back along the corridor (+x)
+    # towards the start pose of the WHILL.
+    position: {x: -6.3, y: 1.65, z: -0.2}
+    # Unity euler angles [deg]. pitch > 0 tilts the sensor down.
+    rotation_deg: {pitch: 25.0, yaw: 90.0, roll: 0.0}
+    topic: /infrastructure/lidar_0/points
+    frame_id: infrastructure_lidar_0
+    publish_hz: 10
+    qos: {reliability: best_effort, durability: volatile, history: keep_last, depth: 5}
