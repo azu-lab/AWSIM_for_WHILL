@@ -20,7 +20,7 @@
             <AllowMulticast>false</AllowMulticast>
         </General>
         <Internal>
-            <MinimumSocketReceiveBufferSize>20MB</MinimumSocketReceiveBufferSize>
+            <SocketReceiveBufferSize min="20MB" />
         </Internal>
         <Discovery>
             <ParticipantIndex>auto</ParticipantIndex>
