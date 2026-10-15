@@ -6,7 +6,7 @@
 #   scripts/ros2_shell.sh ros2 topic list
 #   IMAGE=awsim-for-whill/dreamer scripts/ros2_shell.sh python3 rl/scripts/random_agent.py
 #
-# Build the images first: docker compose -f docker/compose.yaml build
+# Build the images first (see docker/compose.yaml): ros2, then dreamer.
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 IMAGE="${IMAGE:-awsim-for-whill/ros2:latest}"

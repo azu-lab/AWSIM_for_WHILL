@@ -1,5 +1,6 @@
-# Build the images:  docker compose -f docker/compose.yaml build
-# (ros2 must be built before dreamer, which uses it as base image)
+# Build the images (ros2 first, dreamer is built on top of it):
+#   docker compose -f docker/compose.yaml build ros2
+#   docker compose -f docker/compose.yaml build dreamer
 services:
   ros2:
     image: awsim-for-whill/ros2:latest

@@ -252,7 +252,21 @@ def main():
     parser.add_argument('--task', type=str, default='original',
                         choices=['original', 'obstacle_avoidance'],
                         help='タスク選択: original=既存の障害物回避, obstacle_avoidance=ダンボール回避前進')
+    parser.add_argument('--env-config', type=str, default=None,
+                        help='Environment YAML (default: <logdir>/env_config.yaml written by train.py, '
+                             'else rl/configs/env/<task>.yaml)')
     args = parser.parse_args()
+
+    # Use the same environment settings as the training run
+    from awsim_dreamerv3.env_config import apply_env_config
+    if args.env_config is None:
+        saved = Path(args.logdir) / 'env_config.yaml'
+        args.env_config = str(saved if saved.exists() else REPO_ROOT / 'rl' / 'configs' / 'env' / f'{args.task}.yaml')
+    env_settings = apply_env_config(args.env_config)
+    if env_settings['task'] != args.task:
+        print(f"Task '{env_settings['task']}' from {args.env_config} overrides --task {args.task}")
+        args.task = env_settings['task']
+    print(f"Env config: {args.env_config}")
 
     logdir = args.logdir
     print("=" * 60)
@@ -341,8 +355,8 @@ def main():
         gym_env = AWSIMWheelchairEnv(
             render_mode="rgb_array",
             image_size=awsim_config.IMAGE_SIZE,
-            max_linear_vel=1.0,
-            max_angular_vel=1.0,
+            max_linear_vel=awsim_config.MAX_LINEAR_VEL,
+            max_angular_vel=awsim_config.MAX_ANGULAR_VEL,
             goal_distance=awsim_config.GOAL_DISTANCE,
             episode_timeout=awsim_config.EPISODE_TIMEOUT,
             step_duration=awsim_config.STEP_DURATION,

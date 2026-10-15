@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY optimizer/requirements.txt /tmp/requirements-optimizer.txt
 RUN pip3 install --no-cache-dir -r /tmp/requirements-optimizer.txt
 
-ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+    PYTHONUNBUFFERED=1
 WORKDIR /workspace
 CMD ["bash"]
