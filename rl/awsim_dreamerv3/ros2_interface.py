@@ -177,6 +177,7 @@ class ROS2Interface:
         self._initial_orientation: Optional[Any] = None
         self._initial_frame_id: str = "map"  # Default to map
         self._goal_position: Optional[Tuple[float, float, float]] = None
+        self._initial_after_reset = False
         
         # QoS for sensor data
         sensor_qos = QoSProfile(
@@ -559,6 +560,8 @@ class ROS2Interface:
                 # The goal topic of AWSIM catches up within one frame; use the commanded value meanwhile.
                 old = self._goal_position
                 self._goal_position = (msg.x, msg.y, old[2] if old else 0.0)
+        if start_pose is not None:
+            self._initial_after_reset = False   # re-capture the start pose after the next reset
         if start_pose is not None or goal is not None:
             time.sleep(0.2)   # let AWSIM process them before the reset command
 
@@ -642,6 +645,19 @@ class ROS2Interface:
             # KEEP INITIAL POSITION/ORIENTATION: Do not clear it on reset!
             # We want to reuse the very first position as the reset point always.
             # self._initial_position = None  <-- Removed
+        
+        # The "initial" pose was captured from the first odometry message, i.e. wherever the
+        # WHILL happened to be before the first reset (e.g. where the previous run left it).
+        # Re-capture it once, after the first reset, so that wait_for_reset_completion()
+        # compares with the actual start pose. Also after a new start pose was sent.
+        if not self._initial_after_reset:
+            time.sleep(0.3)   # let the odometry of the reset pose arrive
+            with self._lock:
+                if self._latest_odom is not None:
+                    p = self._latest_odom.pose.pose.position
+                    self._initial_position = np.array([p.x, p.y, p.z])
+                    self._initial_orientation = self._latest_odom.pose.pose.orientation
+                    self._initial_after_reset = True
         
         # Re-send gear command after reset
         self._send_gear_command(drive=True)
