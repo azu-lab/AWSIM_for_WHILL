@@ -323,6 +323,9 @@ namespace Awsim.Optimizer
                     case "reset_simulation":
                         return await HandleResetSimulationAsync(request.params_json);
                     
+                    case "reset_episode":
+                        return await HandleResetEpisodeAsync(request.params_json);
+                    
                     case "send_cmd_vel":
                         return HandleSendCmdVel(request.params_json);
                     
@@ -505,6 +508,57 @@ namespace Awsim.Optimizer
             catch (Exception e)
             {
                 return CreateErrorResponse($"ResetSimulation error: {e.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Episode reset for reinforcement learning (rl/whill_env/data_manager.py): optional start pose
+        /// and goal (map frame), then EnvironmentReset.ResetEpisode on the main thread; answers when the
+        /// reset is done (synchronous), with the simulation time of the reset in data_json.
+        /// </summary>
+        [Serializable]
+        private class EpisodeResetRequest
+        {
+            public bool has_start; public double start_x; public double start_y; public double start_yaw;
+            public bool has_start_z; public double start_z;
+            public bool has_goal; public double goal_x; public double goal_y;
+            public bool has_goal_z; public double goal_z;
+        }
+        
+        [Serializable]
+        private class EpisodeResetResult
+        {
+            public double sim_time;
+        }
+        
+        private async Task<string> HandleResetEpisodeAsync(string paramsJson)
+        {
+            try
+            {
+                var p = JsonUtility.FromJson<EpisodeResetRequest>(paramsJson ?? "{}");
+                var tcs = new TaskCompletionSource<double>();
+                EnqueueMainThread(() =>
+                {
+                    try
+                    {
+                        var env = FindFirstObjectByType<Awsim.DreamerV3.EnvironmentReset>();
+                        if (env == null)
+                            throw new Exception("no EnvironmentReset in the scene");
+                        tcs.SetResult(env.ResetEpisode(
+                            p.has_start, p.start_x, p.start_y, p.start_yaw, p.has_start_z ? p.start_z : double.NaN,
+                            p.has_goal, p.goal_x, p.goal_y, p.has_goal_z ? p.goal_z : double.NaN));
+                    }
+                    catch (Exception e)
+                    {
+                        tcs.SetException(e);
+                    }
+                });
+                double simTime = await tcs.Task;
+                return CreateSuccessResponse("Episode reset", JsonUtility.ToJson(new EpisodeResetResult { sim_time = simTime }));
+            }
+            catch (Exception e)
+            {
+                return CreateErrorResponse($"reset_episode error: {e.Message}");
             }
         }
         

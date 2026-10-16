@@ -3,6 +3,7 @@
 // DreamerV3 Environment Reset via Topic
 // Listens to /reset_command topic for reset commands
 
+using System.Collections.Generic;
 using UnityEngine;
 using ROS2;
 using Awsim.Entity;
@@ -52,11 +53,15 @@ namespace Awsim.DreamerV3
         [SerializeField, Tooltip("Seconds between re-publications of the goal position (0 = only at start and on reset). "
             + "The topic is VOLATILE, so a client started after AWSIM only receives later messages.")]
         float _goalPublishInterval = 1.0f;
+        [SerializeField, Tooltip("geometry_msgs/PoseArray (map frame): poses of the obstacles listed above, published with the goal "
+            + "(after every reset and every goal interval). For plots and checks; not part of the agent's observation.")]
+        string _obstaclePosesTopic = "/awsim/episode/obstacles";
         
         [Header("Episode settings over ROS 2 (map frame, same as /ground_truth/odom)")]
-        [SerializeField, Tooltip("geometry_msgs/Pose of base_link for the next resets. z is ignored: the vehicle keeps the height of its scene placement.")]
+        [SerializeField, Tooltip("geometry_msgs/Pose of base_link for the next resets. The height is taken from the ground below (x, y); "
+            + "position.z is only a hint for the ground search (NaN = search from high above).")]
         string _startPoseTopic = "/awsim/episode/start_pose";
-        [SerializeField, Tooltip("geometry_msgs/Point: moves the goal object (x, y; its height is kept).")]
+        [SerializeField, Tooltip("geometry_msgs/Point: moves the goal object to (x, y) on the ground (z: hint as for the start pose).")]
         string _goalTopic = "/awsim/episode/goal";
         
         [Header("Debug")]
@@ -65,8 +70,12 @@ namespace Awsim.DreamerV3
         private ISubscription<std_msgs.msg.Bool> _resetCommandSub;
         private IPublisher<std_msgs.msg.Bool> _resetResponsePub;
         private IPublisher<geometry_msgs.msg.Point> _goalPositionPub;
+        private IPublisher<geometry_msgs.msg.PoseArray> _obstaclePosesPub;
         private ISubscription<geometry_msgs.msg.Pose> _startPoseSub;
         private ISubscription<geometry_msgs.msg.Point> _goalSub;
+        // Height of the vehicle root / goal above the ground below them, captured at start
+        private float _vehicleClearance = float.NaN;
+        private float _goalClearance = float.NaN;
         private readonly object _episodeLock = new object();
         private geometry_msgs.msg.Pose _pendingStartPose;
         private geometry_msgs.msg.Point _pendingGoal;
@@ -171,6 +180,16 @@ namespace Awsim.DreamerV3
                         * (baseLink.transform.position - _wheelchairTransform.position);
             }
             
+            // Clearances of the scene placement, reused when the start pose / goal is moved
+            if (_wheelchairTransform != null && GroundProbe.TryFindGround(_initialPosition.x, _initialPosition.z,
+                    _initialPosition.y + GroundProbe.ProbeAboveHint, IgnoredByProbe(), out float g))
+                _vehicleClearance = _initialPosition.y - g;
+            if (_goalObject != null && GroundProbe.TryFindGround(_goalObject.position.x, _goalObject.position.z,
+                    _goalObject.position.y + GroundProbe.ProbeAboveHint, IgnoredByProbe(), out float gg))
+                _goalClearance = _goalObject.position.y - gg;
+            if (_enableDebugLogs)
+                Debug.Log($"[EnvironmentReset] Clearance above ground: vehicle {_vehicleClearance:F3} m, goal {_goalClearance:F3} m");
+            
             // Try to initialize ROS 2 in Start
             TryInitializeRos2();
         }
@@ -197,6 +216,7 @@ namespace Awsim.DreamerV3
                 goalMsg.Y = -unityPos.x;
                 goalMsg.Z = unityPos.y;
                 _goalPositionPub.Publish(goalMsg);
+                PublishObstaclePoses();
                 _nextGoalPublishTime = Time.unscaledTime + _goalPublishInterval;
                 bool firstTime = !_goalPositionPublished;
                 _goalPositionPublished = true;
@@ -253,6 +273,7 @@ namespace Awsim.DreamerV3
                 if (_goalObject != null)
                 {
                     _goalPositionPub = AwsimRos2Node.CreatePublisher<geometry_msgs.msg.Point>(_goalPositionTopic);
+                    _obstaclePosesPub = AwsimRos2Node.CreatePublisher<geometry_msgs.msg.PoseArray>(_obstaclePosesTopic);
                     _goalSub = AwsimRos2Node.CreateSubscription<geometry_msgs.msg.Point>(_goalTopic, msg =>
                     {
                         lock (_episodeLock) _pendingGoal = msg;
@@ -301,23 +322,49 @@ namespace Awsim.DreamerV3
                 _pendingGoal = null;
             }
             
-            if (startPose != null && _wheelchairTransform != null)
+            if (startPose != null)
+                ApplyStartPose(startPose);
+            if (goal != null)
+                ApplyGoal(goal);
+        }
+        
+        /// <summary>Start pose of base_link (map frame) for the next resets, put on the ground (z: height hint, NaN = none).</summary>
+        void ApplyStartPose(geometry_msgs.msg.Pose startPose)
+        {
+            if (_wheelchairTransform != null)
             {
                 var rotation = Ros2Utility.Ros2ToUnityRotation(startPose.Orientation);
-                var baseLink = Ros2Utility.Ros2ToUnityPosition(startPose.Position);
+                // Upright: keep only the heading (the map is not flat; the vehicle settles on the ground)
+                rotation = Quaternion.Euler(0f, rotation.eulerAngles.y, 0f);
+                var baseLink = Ros2Utility.Ros2ToUnityPosition(new geometry_msgs.msg.Point
+                    { X = startPose.Position.X, Y = startPose.Position.Y, Z = 0.0 });
                 var root = baseLink - rotation * _baseLinkOffset;
-                root.y = _initialPosition.y;   // keep the height of the scene placement
+                root.y = _initialPosition.y;   // fallback: height of the previous start pose
+                float top = GroundProbe.ProbeTop(startPose.Position.Z);
+                if (!float.IsNaN(_vehicleClearance)
+                    && GroundProbe.TryFindGround(root.x, root.z, top, IgnoredByProbe(), out float ground))
+                    root.y = ground + _vehicleClearance + 0.02f;
+                else
+                    Debug.LogWarning($"[EnvironmentReset] No ground found below the start pose; keeping the height {root.y:F2}");
                 _initialPosition = root;
                 _initialRotation = rotation;
                 _initialPoseCaptured = true;
                 if (_enableDebugLogs)
                     Debug.Log($"[EnvironmentReset] Start pose set: root={_initialPosition} rot={_initialRotation.eulerAngles}");
             }
-            
-            if (goal != null && _goalObject != null)
+        }
+        
+        /// <summary>Moves the goal object to (x, y) of the map frame, on the ground (z: height hint, NaN = none).</summary>
+        void ApplyGoal(geometry_msgs.msg.Point goal)
+        {
+            if (_goalObject != null)
             {
-                var p = Ros2Utility.Ros2ToUnityPosition(goal);
-                _goalObject.position = new Vector3(p.x, _goalObject.position.y, p.z);
+                var p = Ros2Utility.Ros2ToUnityPosition(new geometry_msgs.msg.Point { X = goal.X, Y = goal.Y, Z = 0.0 });
+                float y = _goalObject.position.y;
+                if (!float.IsNaN(_goalClearance)
+                    && GroundProbe.TryFindGround(p.x, p.z, GroundProbe.ProbeTop(goal.Z), IgnoredByProbe(), out float ground))
+                    y = ground + _goalClearance;
+                _goalObject.position = new Vector3(p.x, y, p.z);
                 _goalPositionPublished = false;
                 if (_enableDebugLogs)
                     Debug.Log($"[EnvironmentReset] Goal moved to Unity {_goalObject.position}");
@@ -338,6 +385,30 @@ namespace Awsim.DreamerV3
         }
         
         /// <summary>
+        /// Synchronous episode reset (main thread), used by the "reset_episode" request of the TCP
+        /// bridge (OptimizerBridge): optional start pose and goal (map frame; NaN height = no hint),
+        /// then the reset. Returns the simulation time (Time.timeAsDouble, the clock of the sensor
+        /// stamps) right after the reset, so that the client can wait for sensor data taken after it.
+        /// </summary>
+        public double ResetEpisode(bool hasStart, double startX, double startY, double startYaw, double startZ,
+            bool hasGoal, double goalX, double goalY, double goalZ)
+        {
+            if (hasStart)
+            {
+                var pose = new geometry_msgs.msg.Pose();
+                pose.Position.X = startX; pose.Position.Y = startY; pose.Position.Z = startZ;
+                pose.Orientation.Z = System.Math.Sin(startYaw / 2.0);
+                pose.Orientation.W = System.Math.Cos(startYaw / 2.0);
+                ApplyStartPose(pose);
+            }
+            if (hasGoal)
+                ApplyGoal(new geometry_msgs.msg.Point { X = goalX, Y = goalY, Z = goalZ });
+            ResetEnvironment();
+            _goalPositionPublished = false;   // re-publish goal and obstacle poses
+            return Time.timeAsDouble;
+        }
+        
+        /// <summary>
         /// Reset the environment to initial state.
         /// </summary>
         public void ResetEnvironment()
@@ -349,6 +420,39 @@ namespace Awsim.DreamerV3
             
             // Reset obstacles
             ResetObstacles();
+        }
+        
+        void PublishObstaclePoses()
+        {
+            if (_obstaclePosesPub == null)
+                return;
+            var msg = new geometry_msgs.msg.PoseArray();
+            msg.Header.Frame_id = "map";
+            var poses = new System.Collections.Generic.List<geometry_msgs.msg.Pose>();
+            if (_obstacles != null)
+            {
+                foreach (var o in _obstacles)
+                {
+                    if (o == null || !o.gameObject.activeInHierarchy)
+                        continue;
+                    var p = Ros2Utility.UnityToRos2Position(o.position);
+                    var q = Ros2Utility.UnityToRosRotation(o.rotation);
+                    var pose = new geometry_msgs.msg.Pose();
+                    pose.Position.X = p.x; pose.Position.Y = p.y; pose.Position.Z = p.z;
+                    pose.Orientation.X = q.x; pose.Orientation.Y = q.y; pose.Orientation.Z = q.z; pose.Orientation.W = q.w;
+                    poses.Add(pose);
+                }
+            }
+            msg.Poses = poses.ToArray();
+            _obstaclePosesPub.Publish(msg);
+        }
+        
+        /// <summary>Objects the ground search must not land on: the vehicle, the goal, the randomized obstacles.</summary>
+        List<Transform> IgnoredByProbe()
+        {
+            var list = new List<Transform> { _wheelchairTransform, _goalObject };
+            if (_obstacles != null) list.AddRange(_obstacles);
+            return list;
         }
         
         void ResetWheelchair()
@@ -543,6 +647,10 @@ namespace Awsim.DreamerV3
             if (_goalPositionPub != null)
             {
                 AwsimRos2Node.RemovePublisher<geometry_msgs.msg.Point>(_goalPositionPub);
+            }
+            if (_obstaclePosesPub != null)
+            {
+                AwsimRos2Node.RemovePublisher<geometry_msgs.msg.PoseArray>(_obstaclePosesPub);
             }
             if (_goalSub != null)
             {

@@ -20,6 +20,10 @@ namespace Awsim.DreamerV3
         [Header("Collision Settings")]
         [SerializeField] string _obstacleTag = "Obstacle";
         [SerializeField] float _cooldownTime = 0.5f;
+        [SerializeField, Tooltip("Also report contacts with untagged objects (buildings, curbs, shrubs, poles of the map). "
+            + "A contact counts when its normal is steeper than the angle below; flatter contacts are the ground.")]
+        bool _detectEnvironment = false;
+        [SerializeField, Range(0f, 90f)] float _groundMaxSlopeDeg = 45f;
         
         [Header("Debug")]
         [SerializeField] bool _enableDebugLogs = true;
@@ -66,8 +70,8 @@ namespace Awsim.DreamerV3
         {
             if (!_isInitialized || _publisher == null) return;
             
-            // Check if collision is with an obstacle
-            if (!collision.gameObject.CompareTag(_obstacleTag))
+            // Check if collision is with an obstacle (or, optionally, with the map)
+            if (!IsObstacleContact(collision))
             {
                 return;
             }
@@ -87,6 +91,28 @@ namespace Awsim.DreamerV3
             {
                 Debug.Log($"[CollisionPublisher] Collision detected with {collision.gameObject.name}");
             }
+        }
+        
+        void OnCollisionStay(Collision collision)
+        {
+            // A contact that started on the ground (e.g. the body touching a ramp) can turn into a
+            // side contact (curb, wall) without a new OnCollisionEnter.
+            if (_detectEnvironment && !collision.gameObject.CompareTag(_obstacleTag))
+                OnCollisionEnter(collision);
+        }
+        
+        bool IsObstacleContact(Collision collision)
+        {
+            if (collision.gameObject.CompareTag(_obstacleTag))
+                return true;
+            if (!_detectEnvironment)
+                return false;
+            for (int i = 0; i < collision.contactCount; i++)
+            {
+                if (Vector3.Angle(collision.GetContact(i).normal, Vector3.up) > _groundMaxSlopeDeg)
+                    return true;
+            }
+            return false;
         }
         
         void OnTriggerEnter(Collider other)
