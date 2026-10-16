@@ -7,7 +7,7 @@ their own nodes (`/ground_truth_publisher_<id>`, `/wheel_speed_publisher`,
 (node `/RobotecGPULidar`).
 
 Values in the tables come from the source code / serialized settings, and the **measured**
-columns from `ros2_examples/check_interfaces.py` (RTX 5090, corridor scene, standalone player,
+columns from `ros2_examples/check_interfaces.py` (RTX 5090, default West Shinjuku scene, standalone player,
 10 s, see [TEST_REPORT.md](TEST_REPORT.md)). No namespace is used: every name below is absolute.
 
 ## 1. Inputs (AWSIM subscribes)
@@ -19,8 +19,8 @@ columns from `ros2_examples/check_interfaces.py` (RTX 5090, corridor scene, stan
 | `/control/command/control_cmd` | `autoware_control_msgs/Control` | same | Upstream acceleration/steering input. Steering is forced to 0 and the drive force comes only from cmd_vel; a non-zero acceleration only disables the coasting deceleration | `AccelVehicleRos2Input` |
 | `/control/command/turn_indicators_cmd`, `/control/command/hazard_lights_cmd`, `/control/command/emergency_cmd` | Autoware / TIER IV msgs | same | No effect on the WHILL (emergency: empty handler upstream) | `AccelVehicleRos2Input` |
 | `/reset_command` | `std_msgs/Bool` | RELIABLE, VOLATILE | `true`: WHILL back to the start pose (velocities zeroed, gear DRIVE), obstacle(s) re-placed (randomized), answer on `/reset_response` | `EnvironmentReset` (corridor scene) |
-| `/awsim/episode/start_pose` | `geometry_msgs/Pose` | RELIABLE, VOLATILE | Start pose of **base_link** in `map` for the next resets (z ignored) | `EnvironmentReset` |
-| `/awsim/episode/goal` | `geometry_msgs/Point` | RELIABLE, VOLATILE | Moves the goal object (x, y in `map`) | `EnvironmentReset` |
+| `/awsim/episode/start_pose` | `geometry_msgs/Pose` | RELIABLE, VOLATILE | Start pose of **base_link** in `map` for the next resets; AWSIM puts the vehicle upright on the ground below (x, y) (ray cast; `position.z` = optional height hint, NaN = search from above) | `EnvironmentReset` |
+| `/awsim/episode/goal` | `geometry_msgs/Point` | RELIABLE, VOLATILE | Moves the goal object to (x, y) in `map`, on the ground below (z: height hint as above) | `EnvironmentReset` |
 | `/awsim/awsim_rviz_plugins/pose_teleport/pose_with_covariance` | `geometry_msgs/PoseWithCovarianceStamped` | RELIABLE, VOLATILE | Upstream RViz "2D pose teleport". **Wired to the inactive Lexus, does not move the WHILL** | `AwsimRvizPluginsClient` |
 | `/awsim/awsim_rviz_plugins/npc_spawner/*` | | | Upstream NPC spawner (no NPC prefabs configured in this scene) | `AwsimRvizPluginsClient` |
 
@@ -33,7 +33,9 @@ reacting after a key press, switch back to AUTONOMOUS (the `C` key or the servic
 
 Outside ROS 2: `OptimizerBridge` listens on **TCP 127.0.0.1:50051** (length-prefixed JSON:
 `ping`, `set_parameters`, `get_parameters`, `reset_simulation`, `send_cmd_vel`,
-`get_current_odom`, `run_scenario`). Used by `whill_optimizer`.
+`get_current_odom`, `run_scenario`, `reset_episode`). Used by `whill_optimizer` and, for the
+synchronous episode reset (`reset_episode`: start pose and goal in `map`, reset, answer with the
+simulation time of the reset), by the reinforcement-learning environment (`rl/whill_env/data_manager.py`).
 
 ### Minimal commands
 
@@ -56,16 +58,17 @@ make it explicit.
 | Topic | Type | QoS | frame_id | Rate (setting → **measured**) | Content / unit | Component |
 |---|---|---|---|---|---|---|
 | `/clock` | `rosgraph_msgs/Clock` | RELIABLE, VOLATILE, 1 | – | 100 Hz → **99.3 Hz** | Simulation time, see §4 | `ClockRos2Publisher` |
-| `/ground_truth/odom` | `nav_msgs/Odometry` | RELIABLE, VOLATILE, 10 (node default) | `map` → child `base_link` | 30 Hz → **23.5 Hz** (counter reset in `Update`, so below 30 at ~70 fps) | Pose of `RealAxle_center` (center of the drive axle) in `map`; twist in `base_link` (m/s, rad/s). No covariance | `GroundTruthPublisher` |
-| `/infrastructure/lidar_0/points` | `sensor_msgs/PointCloud2` | BEST_EFFORT, VOLATILE, 5 | `infrastructure_lidar_0` | 10 Hz → **10.0 Hz** | Ouster OS1-64, x,y,z,intensity,channel (24 B/point); **≈43 150 points, 1.04 MB** per message in the corridor | `RglLidarPublisher` (config/infra_lidar.yaml) |
-| `/sensing/lidar/top/pointcloud_raw` | `sensor_msgs/PointCloud2` | BEST_EFFORT, VOLATILE, 5 | `velodyne_top` | 10 Hz → **10.0 Hz** | Vehicle VLP16, 28 800 points, 0.69 MB | `RglLidarPublisher` |
-| `/sensing/lidar/top/pointcloud_raw_ex` | `sensor_msgs/PointCloud2` | same | `velodyne_top` | **10.0 Hz** | Same points with return type, azimuth, elevation, distance, time stamp; 0.92 MB | `RglLidarPublisher` |
-| `/sensing/camera/traffic_light/image_raw` | `sensor_msgs/Image` | BEST_EFFORT, VOLATILE, 1 | `traffic_light_left_camera/camera_link` | → **7.9 Hz** | 1920×1080 `bgr8`, 6.2 MB. Observation of the DreamerV3 task | `CameraRos2Publisher` |
-| `/sensing/camera/traffic_light/camera_info` | `sensor_msgs/CameraInfo` | same | same | **7.9 Hz** | | `CameraRos2Publisher` |
+| `/ground_truth/odom` | `nav_msgs/Odometry` | RELIABLE, VOLATILE, 10 (node default) | `map` → child `base_link` | 20 Hz → **20.0 Hz** | Pose of `RealAxle_center` (center of the drive axle) in `map`; twist in `base_link` (m/s, rad/s). No covariance | `GroundTruthPublisher` |
+| `/infrastructure/lidar_0/points` | `sensor_msgs/PointCloud2` | BEST_EFFORT, VOLATILE, 5 | `infrastructure_lidar_0` | 10 Hz → **10.0 Hz** | Ouster OS1-64, x,y,z,intensity,channel (24 B/point); **≈60 080 points, 1.44 MB** per message in West Shinjuku (≈43 150 points, 1.04 MB in the corridor) | `RglLidarPublisher` (config/infra_lidar.yaml) |
+| `/sensing/lidar/top/pointcloud_raw` | `sensor_msgs/PointCloud2` | BEST_EFFORT, VOLATILE, 5 | `velodyne_top` | 10 Hz → **10.0 Hz** | Vehicle VLP16, ≈27 650 points, 0.66 MB (West Shinjuku) | `RglLidarPublisher` |
+| `/sensing/lidar/top/pointcloud_raw_ex` | `sensor_msgs/PointCloud2` | same | `velodyne_top` | **10.0 Hz** | Same points with return type, azimuth, elevation, distance, time stamp; 0.88 MB | `RglLidarPublisher` |
+| `/sensing/camera/front/image_raw` | `sensor_msgs/Image` | BEST_EFFORT, VOLATILE, 1 | `traffic_light_left_camera/camera_link` | 10 Hz → **10.0 Hz** (`CameraSensorScheduler`) | 1920×1080 `bgr8`, 6.2 MB. Observation of the RL tasks | `CameraRos2Publisher` |
+| `/sensing/camera/front/camera_info` | `sensor_msgs/CameraInfo` | same | same | **10.0 Hz** | | `CameraRos2Publisher` |
 | `/whill/wheel_velocities_sim` | `std_msgs/Float32MultiArray` | RELIABLE, VOLATILE, 10 | – | 60 Hz → **39.4 Hz** | `[left measured, right measured, left target, right target]` drive-wheel ground speeds [m/s] | `WheelSpeedPublisher` |
-| `/collision_sensor` | `std_msgs/Bool` | RELIABLE, VOLATILE, 10 | – | on event (cool-down 0.5 s) | `true` when the WHILL touches an object tagged `Obstacle` | `CollisionPublisher` |
+| `/collision_sensor` | `std_msgs/Bool` | RELIABLE, VOLATILE, 10 | – | on event (cool-down 0.5 s) | `true` when the WHILL touches an object tagged `Obstacle` (any contact) or, in the West Shinjuku scene, any object of the map with a contact steeper than 45° (buildings, curbs, shrubs, poles; `_detectEnvironment`) | `CollisionPublisher` |
 | `/reset_response` | `std_msgs/Bool` | RELIABLE, VOLATILE | – | on reset | `true` after a reset | `EnvironmentReset` |
 | `/awsim/goal_position` | `geometry_msgs/Point` | RELIABLE, VOLATILE | (`map`) | 1 Hz and after every reset/goal change | Goal object position in `map` [m] | `EnvironmentReset` |
+| `/awsim/episode/obstacles` | `geometry_msgs/PoseArray` | RELIABLE, VOLATILE | `map` | with `/awsim/goal_position` | Poses of the obstacles randomized by `EnvironmentReset` (e.g. the cardboard box of the RL task); for plots and checks, not part of the RL observation | `EnvironmentReset` |
 | `/tf_static` | `tf2_msgs/TFMessage` | RELIABLE, **TRANSIENT_LOCAL**, 1 | `map` → `infrastructure_lidar_<n>` | once (again if a sensor moves) | Pose of each infrastructure LiDAR | `InfraLidarTfPublisher` |
 | `/vehicle/status/velocity_status`, `gear_status`, `control_mode`, `steering_status`, `turn_indicators_status`, `hazard_lights_status` | `autoware_vehicle_msgs/*Report` | system default (prefab) | `base_link` | 30 Hz | Upstream Autoware vehicle reports | `AccelVehicleReportRos2Publisher` |
 
@@ -94,7 +97,7 @@ graph TD
 |---|---|---|
 | `map` | Unity world in ROS axes | – |
 | `base_link` | `RealAxle_center` | `/ground_truth/odom` |
-| `infrastructure_lidar_0` | `config/infra_lidar.yaml` | `/tf_static`: t = (−0.20, 6.30, 1.65) m |
+| `infrastructure_lidar_0` | `config/infra_lidar.yaml` | `/tf_static`: t = (−128.00, 30.00, −4.37) m (West Shinjuku); (−0.20, 6.30, 1.65) m in the corridor scene |
 | `velodyne_top` | VelodyneVLP16 in the prefab | vehicle frame (−0.014, 0.383, 0.361) m Unity axes, see VEHICLE_MODEL.md; **no TF** |
 | `traffic_light_left_camera/camera_link` | CameraSensor in the prefab | vehicle frame (0.326, 0.916, 0.287) m; **no TF** |
 
@@ -121,8 +124,10 @@ There is no `odom` frame. To use the vehicle-mounted sensors with TF, publish
   `Time.timeScale = 0`, `Time.timeAsDouble` stops, so `/clock` keeps being published with a constant
   value and every stamp freezes; after resuming it continues from that value (no jump).
   `OptimizerBridge.run_scenario` changes `Time.timeScale` for its duration.
-- The DreamerV3 environment does **not** use sim time: it waits for a new camera frame per step
-  and measures its episode timeout in wall-clock seconds.
+- The RL environment (`rl/whill_env`) does not set `use_sim_time`; it uses the image stamps (sim
+  time) to detect a new camera frame per step and the simulation time returned by the TCP reset
+  (`reset_episode`) to take the first frame after a reset. Episode limits are in steps
+  (`episode.max_steps`); `episode.timeout_sec` is wall-clock time.
 
 ## 5. Several WHILLs
 

@@ -104,23 +104,29 @@ Runtime-tunable values can be read from a running AWSIM with
 
 | Parameter (OptimizerBridge name) | AccelVehicle field | Value | Origin |
 |---|---|---|---|
-| skidding_cancel_rate | `_skiddingCancelRate` | 33.554504 | 3scenario_v2 (soturon scene: 10.24398) |
-| front_wheel_skidding_rate | `_frontWheelSkiddingRate` | 1.1052157 | 3scenario_v2 (soturon scene: 0.14087) |
-| forward_slip_multiplier | `_forwardSlipMultiplier` | 0.8068368 | 3scenario_v2 |
-| wheel_kp | `_wheelKp` | 27.81741 | 3scenario_v2 |
-| wheel_ki | `_wheelKi` | 0.8199443 | 3scenario_v2 |
-| wheel_kd | `_wheelKd` | 1.002646 | 3scenario_v2 |
-| wheel_integral_clamp | `_wheelIntegralClamp` | 0.2580943 | 3scenario_v2 |
-| air_drag | `_airDrag` | 0.4388446 | 3scenario_v2 |
-| rolling_resistance | `_rollingResistance` | 0.004417808 | 3scenario_v2 |
-| frontal_area | `_frontalArea` | 0.9718794 | 3scenario_v2 |
-| com_offset_x/y/z | `Rigidbody.centerOfMass` | (0.0048921, 0.1438175, −0.2666117) | 3scenario_v2 |
+| skidding_cancel_rate | `_skiddingCancelRate` | 34.790068 | 4scenario_v2 (3scenario_v2: 33.554504; soturon scene: 10.24398) |
+| front_wheel_skidding_rate | `_frontWheelSkiddingRate` | 0.40560326 | 4scenario_v2 (3scenario_v2: 1.1052157; soturon scene: 0.14087) |
+| forward_slip_multiplier | `_forwardSlipMultiplier` | 0.84004636 | 4scenario_v2 |
+| wheel_kp | `_wheelKp` | 27.699972 | 4scenario_v2 |
+| wheel_ki | `_wheelKi` | 0.40250112 | 4scenario_v2 |
+| wheel_kd | `_wheelKd` | 0.73839092 | 4scenario_v2 |
+| wheel_integral_clamp | `_wheelIntegralClamp` | 1.4313239 | 4scenario_v2 |
+| air_drag | `_airDrag` | 1.1324312 | 4scenario_v2 |
+| rolling_resistance | `_rollingResistance` | 0.0033877346 | 4scenario_v2 |
+| frontal_area | `_frontalArea` | 1.0614818 | 4scenario_v2 |
+| com_offset_x/y/z | `Rigidbody.centerOfMass` (Unity axes: x right, y up, z forward) | (0.0044574, 0.1215417, −0.2654788) | 4scenario_v2 |
 | – | `_treadWidth` | 0.496 m | measured geometry |
 | – | `_maxSpeed` | 1.667 m/s (6 km/h) | |
 | – | mass | 55 kg (code) | |
 
-The default is **exactly the best result of the 3-scenario optimization**
-(`config/vehicle/whill_model_cr_optimized_3scenario_v2.yaml`). This differs from soturon: in its
+The default is **exactly the best result of the 4-scenario optimization** (straight, turn,
+circle, S-curve; `config/vehicle/whill_model_cr_optimized_4scenario_v2.yaml`), the optimized
+values of Table II of the paper (arXiv:2609.28969). The best result of the 3-scenario
+optimization is kept as `whill_model_cr_optimized_3scenario_v2.yaml`. The paper lists the center
+of mass in the vehicle frame of ROS (CoM_x front = Unity z, CoM_y left = Unity −x, CoM_z up =
+Unity y); its CoM_y (+0.0044 m, "left") is the value of Unity x (+0.0045 m, i.e. right).
+
+The scene of soturon differed from both: in its
 commit `d72b3a3` (2026-02-10) only 11 of the 13 optimized values were entered in the scene;
 `skidding_cancel_rate` and `front_wheel_skidding_rate` kept the values of an older study
 (`saitekika.yaml`: 10.24398 / 0.14087), and that state was used for every later experiment of

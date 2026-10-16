@@ -56,6 +56,7 @@ RViz (with a display): `rviz2`, fixed frame `map`, add PointCloud2 `/infrastruct
 
 | Script | What it checks | Pass criterion |
 |---|---|---|
+| `teleop_keyboard.py` | interactive driving from the terminal: w/s speed ±0.1 m/s, a/d turn ±0.1 rad/s, space stop, q quit; shows the odometry | – |
 | `drive_test.py [--csv out.csv]` | gear DRIVE, then forward 0.4 m/s 3 s, stop 2 s, backward −0.3 m/s 3 s, stop, turn left 0.5 rad/s 3 s, stop, turn right, stop | displacement along the heading > 50 % of the commanded one, yaw change > 50 %, \|v\|,\|ω\| < 0.05 at the end of each stop |
 | `check_interfaces.py [--duration 10] [--json out.json]` | rate, frame_id, size, points and stamp − /clock of every output topic | prints a Markdown table (no pass/fail) |
 | `infra_lidar_check.py [--topic ...]` | the infrastructure LiDAR sees the WHILL: cloud transformed with `/tf_static`, points counted in a box around base_link | median ≥ 20 points |
@@ -67,20 +68,20 @@ Run them in the container:
 scripts/ros2_shell.sh python3 ros2_examples/drive_test.py
 scripts/ros2_shell.sh python3 ros2_examples/check_interfaces.py
 scripts/ros2_shell.sh python3 ros2_examples/infra_lidar_check.py
-scripts/ros2_shell.sh python3 ros2_examples/reset_collision_test.py   # corridor scene only
+scripts/ros2_shell.sh python3 ros2_examples/reset_collision_test.py   # corridor scene only (needs Obstacle-tagged objects)
 ```
 
-Output of `drive_test.py` on the reference machine (RTX 5090, corridor scene):
+Output of `drive_test.py` on the reference machine (RTX 5090, default West Shinjuku scene, sidewalk with a 2° slope):
 
 ```
 Gear DRIVE: OK
-PASS  forward    cmd=(+0.40 m/s, +0.00 rad/s, 3 s)  along=+1.164 m lateral=-0.002 m dyaw=-0.1 deg  v_end=+0.399 w_end=-0.000
+PASS  forward    cmd=(+0.40 m/s, +0.00 rad/s, 3 s)  along=+1.201 m lateral=+0.012 m dyaw=-0.5 deg  v_end=+0.410 w_end=-0.002
 PASS  stop_1     ...  v_end=+0.000 w_end=-0.000
-PASS  backward   cmd=(-0.30 m/s, +0.00 rad/s, 3 s)  along=-0.862 m lateral=-0.001 m dyaw=+0.1 deg  v_end=-0.299
+PASS  backward   cmd=(-0.30 m/s, +0.00 rad/s, 3 s)  along=-0.844 m lateral=+0.017 m dyaw=-0.4 deg  v_end=-0.287
 PASS  stop_2     ...
-PASS  turn_left  cmd=(+0.00 m/s, +0.50 rad/s, 3 s)  along=+0.007 m lateral=-0.009 m dyaw=+82.4 deg  w_end=+0.502
+PASS  turn_left  cmd=(+0.00 m/s, +0.50 rad/s, 3 s)  along=+0.032 m lateral=+0.016 m dyaw=+81.9 deg  w_end=+0.501
 PASS  stop_3     ...
-PASS  turn_right cmd=(+0.00 m/s, -0.50 rad/s, 3 s)  along=+0.008 m lateral=+0.008 m dyaw=-82.1 deg  w_end=-0.502
+PASS  turn_right cmd=(+0.00 m/s, -0.50 rad/s, 3 s)  along=+0.025 m lateral=-0.025 m dyaw=-81.5 deg  w_end=-0.497
 PASS  stop_4     ...
 8/8 phases passed
 ```

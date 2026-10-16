@@ -33,7 +33,7 @@ Where the network is inserted depends on where the computation runs: raw point c
 
 | Data | Available from | Notes |
 |---|---|---|
-| WHILL position / orientation | `/ground_truth/odom` pose (`map`, base_link), 23.5 Hz | also `OptimizerBridge.get_current_odom` (TCP) |
+| WHILL position / orientation | `/ground_truth/odom` pose (`map`, base_link), 20 Hz | also `OptimizerBridge.get_current_odom` (TCP) |
 | WHILL velocity | `/ground_truth/odom` twist (base_link) | |
 | Infrastructure LiDAR position / orientation | `/tf_static` `map → infrastructure_lidar_<n>`; `config/infra_lidar.yaml` | static |
 | Unit identifiers | frame ids: `infrastructure_lidar_<n>`, `base_link` | there is **no vehicle ID** (one WHILL only, see ROS2_INTERFACE.md §5) |
@@ -49,17 +49,18 @@ Serialized sizes (CDR, measured with `rclpy.serialization`) and rates:
 
 | Payload | Message | Size per message | Rate | Data rate | Notes |
 |---|---|---|---|---|---|
-| Raw point cloud | `sensor_msgs/PointCloud2`, OS1-64, x,y,z,intensity,channel | **1 035 696 B** (≈43 150 points × 24 B) | 10 Hz | **≈ 83 Mbit/s** | measured in the corridor; scales with the number of returns (open space returns fewer points). Likely too much for a single wireless V2X link at range (*estimate*); compression (e.g. range image / Draco) or down-sampling would be needed |
+| Raw point cloud | `sensor_msgs/PointCloud2`, OS1-64, x,y,z,intensity,channel | **1 441 968 B** (≈60 080 points × 24 B) in West Shinjuku; 1 035 696 B in the corridor | 10 Hz | **≈ 115 Mbit/s** (≈ 83 Mbit/s corridor) | measured; scales with the number of returns (open space returns fewer points). Likely too much for a single wireless V2X link at range (*estimate*); compression (e.g. range image / Draco) or down-sampling would be needed |
 | Raw point cloud, VLP16 class | `PointCloud2` 28 800 points | 691 200 B | 10 Hz | ≈ 55 Mbit/s | vehicle LiDAR, for comparison |
 | Detections / tracks | e.g. `autoware_perception_msgs/TrackedObjects` | *estimate* ≈ 1 kB per object (pose, covariance, twist, shape) | 10 Hz | ≈ 0.1 Mbit/s for 10 objects | not produced by this repository |
 | Future trajectory | `nav_msgs/Path`, N poses | **748 B (N=10), 2 188 B (N=30), 3 628 B (N=50)** | 10 Hz | ≈ 0.18 Mbit/s (N=30) | |
 | Velocity command | `geometry_msgs/Twist` | **52 B** | 10–20 Hz | ≈ 4–8 kbit/s | AWSIM holds the last command |
-| Vehicle state (uplink) | `nav_msgs/Odometry` | **716 B** | 23.5 Hz | ≈ 0.13 Mbit/s | |
+| Vehicle state (uplink) | `nav_msgs/Odometry` | **716 B** | 20 Hz | ≈ 0.11 Mbit/s | |
+| Camera image | `sensor_msgs/Image` 1920×1080 bgr8 (`/sensing/camera/front/image_raw`) | 6 220 800 B | 10 Hz | ≈ 500 Mbit/s | raw; for a vehicle camera over a network compression is needed |
 | Collision / reset | `std_msgs/Bool` | 5 B | events | – | simulation control, not part of the network |
 
 Effect of delay (qualitative):
 
-- **PointCloud2**: dominated by serialization/transmission time (≈ 8 Mbit per cloud); at a few
+- **PointCloud2**: dominated by serialization/transmission time (≈ 8–12 Mbit per cloud); at a few
   tens of Mbit/s the latency approaches the 100 ms frame period and frames queue up — loss of whole
   clouds (fragmented UDP) is the typical failure.
 - **Detections / trajectory**: small; latency is dominated by medium access and retransmissions.
@@ -123,7 +124,7 @@ containers whose interfaces are connected through ns-3 with
 [FdNetDevice](https://www.nsnam.org/docs/models/html/fd-net-device.html), ns-3 running with
 `RealtimeSimulatorImpl` ([emulation overview](https://www.nsnam.org/docs/models/html/emulation-overview.html)).
 The real DDS traffic crosses the simulated network, so DDS discovery, fragmentation and
-retransmissions are included. Drawbacks: ns-3 must keep up with real time (83 Mbit/s point
+retransmissions are included. Drawbacks: ns-3 must keep up with real time (≈ 100 Mbit/s point
 clouds are demanding), DDS must be configured per namespace (the provided `config/cyclonedds.xml`
 binds to loopback), and wall-clock time drives the network while AWSIM stamps use `/clock`.
 

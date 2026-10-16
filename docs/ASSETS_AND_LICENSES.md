@@ -28,9 +28,11 @@ Consequences for this repository:
   commercially.
 - Prebuilt players (`*.x86_64`) are **not** distributed; build them with
   `scripts/build_player.sh`.
-- The Shinjuku map (AWSIM "Externals", 1.4 GB, CC BY-NC) is not included. The upstream scene
-  keeps an inactive `Environments/Shinjuku` node whose meshes reference it; this project does not
-  use it.
+- The West Shinjuku map (AWSIM "Externals", `Shinjuku.unitypackage` of the AWSIM v2.0.0 release,
+  1.4 GB, **CC BY-NC**) is **not stored in this repository** (`Assets/Awsim/Externals/` is ignored
+  by Git, as upstream). The default scene uses it; `scripts/fetch_shinjuku_map.sh` (called by
+  `scripts/setup.sh`) downloads it from the official AWSIM release and imports it locally. The
+  images in `docs/images/` that show the map are renderings of this CC BY-NC asset.
 
 ## 2. What is in this repository
 
@@ -48,6 +50,8 @@ Consequences for this repository:
 | `Assets/Awsim/Models/Entity/Cardboard.mat`, `New Material*.mat`, `Misc/redgoal.mat` | soturon (plain colors; the cardboard photo texture was removed) | Apache 2.0 |
 | `Assets/Awsim/Scripts/InfraLidar/`, `Assets/Awsim/Scripts/Editor/{InfraLidar,WhillModelCR,Build}/` | This repository | Apache 2.0 |
 | `optimizer/`, `rl/`, `ros2_examples/`, `scripts/`, `config/`, `docker/`, `docs/`, `README*.md` | soturon Python tools (adapted) and this repository | Apache 2.0 |
+| `data/real_whill/` (5 rosbag2 recordings, 11 MB) | recordings of a real WHILL Model CR made for soturon (cmd_vel, wheel odometry, WHILL state, battery; no images) | Apache 2.0 (published with the consent of the author) |
+| Pretrained model `shinjuku_box_dreamerv3` (**not in the repository**: GitHub Release asset, downloaded by `scripts/fetch_pretrained.sh` into `pretrained/`, which Git ignores) | DreamerV3 trained with this repository on camera images of the West Shinjuku map | **CC BY-NC 4.0** (follows the CC BY-NC map it was trained on); `LICENSE.txt` in the package. Python pickle: load only from a trusted source |
 | `third_party/dreamerv3` (git submodule, not copied) | [danijar/dreamerv3](https://github.com/danijar/dreamerv3) @ `b65cf81` | MIT |
 
 ## 3. Excluded from this repository
@@ -63,19 +67,18 @@ repository was created from scratch, so these files are **not in any commit** ei
 | `AWSIM/Assets/Awsim/Environment/Mesh[slam_map_20260206_221614 - Cloud] (level 8).obj`, `wall_material.mat` | Mesh reconstructed from a SLAM point cloud of a real building | Information about a real (laboratory) building |
 | `AWSIM/Assets/Awsim/Models/Entity/IMG_6763 (1).jpeg`, `IMG_6764 (1).jpeg`, `Misc/IMG_6763 (1).jpeg` | Photos of a cardboard box used as texture | Third-party logos and a shipping label |
 | `AWSIM/Assets/NewBehaviourScript.cs`, `.../Input/AccelVehicleInputSystemJoystick.cs` | Empty template / empty file | Unused |
-| `whill_cmd_*`, `awsim_replay_*`, `rosbags/` (rosbag2) | Recordings of a real WHILL (cmd_vel, odometry, battery) and of AWSIM | Publication right not confirmed; required only to re-run the optimization (see PARAMETER_OPTIMIZATION.md) |
-| `*.db`, `*_results.json`, `batch_eval_*`, `ttest_*`, `visualization/`, `world_model/sim_trajectory_*`, `world_model/eval_*.csv` | Optimization studies and evaluation results | Derived from the real-WHILL recordings (same reason). The resulting parameter sets are published in `config/vehicle/` |
+| `awsim_replay_*`, `rosbags/inference_*`, nested copy `whill_cmd_straight_*/whill_cmd_s_curve_*` | Recordings of AWSIM replays and of policy outputs; a duplicate of the S-curve recording | Not needed (the five `whill_cmd_*` recordings are included in `data/real_whill/`) |
+| `*.db`, `*_results.json`, `batch_eval_*`, `ttest_*`, `visualization/`, `world_model/sim_trajectory_*`, `world_model/eval_*.csv` | Optimization studies and evaluation results of soturon | Outputs, not inputs; the resulting parameter sets are in `config/vehicle/` and every study can be re-run from `data/real_whill/` |
 | `specification.md`, `system_model.md`, `toukei_siyousho.md`, `AWSIM_DreamerV3_Spec.md`, `AWSIM/パラメータ調整ガイド.md`, `README.md` | Internal design notes | Partly outdated (e.g. "gRPC" for what is a TCP JSON protocol); replaced by the documents in `docs/` |
 | `sadounirin.cs`, `yonrin.cs` | Old snapshots of AccelVehicle.cs | Superseded by the current file |
 | upstream `docs/`, `mkdocs.yml`, `README_img/` | AWSIM documentation | AWSIM License forbids hosting it elsewhere |
 
-## 4. Copyright notices to confirm before publication
+## 4. Copyright notices of the soturon files
 
 - `Assets/Awsim/Scripts/DreamerV3/CollisionPublisher.cs` and `EnvironmentReset.cs` carry
   `// Copyright 2025 Azumi Lab.`
 - `Assets/Awsim/Scripts/Optimizer/OptimizerBridge.cs` carries the TIER IV Apache header,
   although the file was written for soturon (it does not exist upstream).
 
-These headers were kept unchanged: who holds the copyright of the code written during the
-bachelor thesis is for the author to decide. New files of this repository carry
+These headers were kept unchanged at the author's request. New files of this repository carry
 `Copyright 2026 shoumexi-03` with the Apache 2.0 header.
