@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Rebuild the infrastructure LiDARs of the corridor scene from config/infra_lidar.yaml.
+# Rebuild the infrastructure LiDARs of one scene from a YAML file
+# (default: config/infra_lidar.yaml into the default West Shinjuku scene; the corridor scene uses
+# config/infra_lidar_corridor.yaml). scripts/setup_scenes.sh regenerates both scenes.
 #   scripts/setup_infra_lidar.sh [config.yaml] [scene.unity]
 # Close the Unity Editor before running.
 set -euo pipefail

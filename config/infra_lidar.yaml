@@ -1,8 +1,11 @@
-# Infrastructure LiDARs of the corridor scene
-# (Assets/Awsim/Scenes/AutowareSimulationDemo.unity).
+# Infrastructure LiDARs of the default scene (West Shinjuku,
+# Assets/Awsim/Scenes/AutowareSimulationDemo.unity). The corridor scene has its own file,
+# config/infra_lidar_corridor.yaml.
 #
-# This file is the source of truth. Apply it to the scene with
-#   scripts/setup_infra_lidar.sh
+# This file is the source of truth. Apply it with
+#   scripts/setup_scenes.sh            (regenerates both scenes)
+# or
+#   scripts/setup_infra_lidar.sh config/infra_lidar.yaml Assets/Awsim/Scenes/AutowareSimulationDemo.unity
 # or, in the Unity Editor, "AWSIM for WHILL > Setup infrastructure LiDARs".
 # The tool replaces the scene object "InfraLidars" with the sensors below, so do
 # not edit them in the Inspector.
@@ -21,12 +24,12 @@ infra_lidars:
     # Prefab: Assets/Awsim/Prefabs/Entity/EgoVehicle/Sensor/Lidars/Hdrp/<model>.prefab
     # (VelodyneVLP16, VelodyneVLP32C, VelodyneVLS128, OusterOS1-64, HesaiPandarXT32, ...)
     model: OusterOS1-64
-    # At the end of the corridor behind the goal, 2.5 m above the floor
-    # (floor top is at Unity y = -0.85), looking back along the corridor (+x)
-    # towards the start pose of the WHILL.
-    position: {x: -6.3, y: 1.65, z: -0.2}
+    # On the building side of the sidewalk, 12 m ahead of the start pose of the WHILL
+    # (Unity (-30, -7.37, -140), facing +z), 3 m above the sidewalk, 1 m off the facade,
+    # looking back at the WHILL (-z).
+    position: {x: -30.0, y: -4.37, z: -128.0}
     # Unity euler angles [deg]. pitch > 0 tilts the sensor down.
-    rotation_deg: {pitch: 25.0, yaw: 90.0, roll: 0.0}
+    rotation_deg: {pitch: 15.0, yaw: 180.0, roll: 0.0}
     topic: /infrastructure/lidar_0/points
     frame_id: infrastructure_lidar_0
     publish_hz: 10
