@@ -17,6 +17,7 @@ import threading
 import time
 
 import rclpy
+import rclpy.executors
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from rosgraph_msgs.msg import Clock
@@ -32,8 +33,8 @@ TOPICS = [
     ("/infrastructure/lidar_0/points", PointCloud2),
     ("/sensing/lidar/top/pointcloud_raw", PointCloud2),
     ("/sensing/lidar/top/pointcloud_raw_ex", PointCloud2),
-    ("/sensing/camera/traffic_light/image_raw", Image),
-    ("/sensing/camera/traffic_light/camera_info", CameraInfo),
+    ("/sensing/camera/front/image_raw", Image),
+    ("/sensing/camera/front/camera_info", CameraInfo),
     ("/whill/wheel_velocities_sim", Float32MultiArray),
     ("/collision_sensor", Bool),
     ("/awsim/goal_position", Point),
@@ -107,7 +108,10 @@ def main():
 
     rclpy.init()
     node = Probe()
-    threading.Thread(target=rclpy.spin, args=(node,), daemon=True).start()
+    executor = rclpy.executors.SingleThreadedExecutor()
+    executor.add_node(node)
+    spin_thread = threading.Thread(target=executor.spin, daemon=True)
+    spin_thread.start()
     print(f"Listening for {args.duration:.0f} s ...", file=sys.stderr)
     time.sleep(args.duration)
 
@@ -137,6 +141,8 @@ def main():
     if args.json:
         with open(args.json, "w") as f:
             json.dump(rows, f, indent=2)
+    executor.shutdown()   # stop spinning before destroying the node
+    spin_thread.join(timeout=2.0)
     node.destroy_node()
     rclpy.shutdown()
 

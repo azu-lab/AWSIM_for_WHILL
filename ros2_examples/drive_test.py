@@ -19,6 +19,7 @@ import threading
 import time
 
 import rclpy
+import rclpy.executors
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import Twist
@@ -111,7 +112,10 @@ def main():
 
     rclpy.init()
     node = DriveTest()
-    threading.Thread(target=rclpy.spin, args=(node,), daemon=True).start()
+    executor = rclpy.executors.SingleThreadedExecutor()
+    executor.add_node(node)
+    spin_thread = threading.Thread(target=executor.spin, daemon=True)
+    spin_thread.start()
 
     print(f"Waiting for {ODOM_TOPIC} ...")
     start = time.time()
@@ -166,6 +170,8 @@ def main():
 
     n_fail = sum(1 for _, p in results if not p)
     print(f"\n{len(results) - n_fail}/{len(results)} phases passed")
+    executor.shutdown()   # stop spinning before destroying the node
+    spin_thread.join(timeout=2.0)
     node.destroy_node()
     rclpy.shutdown()
     sys.exit(1 if n_fail else 0)

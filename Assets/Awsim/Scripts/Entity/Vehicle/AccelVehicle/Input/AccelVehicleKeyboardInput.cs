@@ -18,11 +18,15 @@ namespace Awsim.Entity
 {
     /// <summary>
     /// Controlling vehicle input via keyboard.
+    /// For the differential-drive WHILL the arrow keys give velocity targets (as cmd_vel does):
+    /// held = drive, released = stop. Pressing an arrow key switches the control mode to Manual
+    /// (cmd_vel is ignored); C switches back to Autonomous (ROS 2).
     /// </summary>
     /// ----- Default key binds -----
-    /// up arrow            : Accelerate
-    /// down arrow          : Deceleration
-    /// left/right arrow    : Steering
+    /// up / down arrow     : forward / backward at _linearVelocity
+    /// left / right arrow  : turn left / right at _yawRate (combine with up/down for curves)
+    /// left shift (held)   : x _fastMultiplier
+    /// C                   : back to Autonomous (ROS 2 cmd_vel)
     /// D                   : Drive gear
     /// P                   : Parking gear
     /// R                   : Reverse gear
@@ -36,12 +40,20 @@ namespace Awsim.Entity
         public string Name => "Keyboard";
         public float AccelerationInput { get; private set; }
         public float SteerAngleInput { get; private set; }
-        public Gear GearInput { get; private set; }
+        // Drive by default: in Manual mode the vehicle takes this gear, and Parking (the enum default)
+        // disables the velocity control of the differential drive.
+        public Gear GearInput { get; private set; } = Gear.Drive;
         public TurnIndicators TurnIndicatorsInput { get; private set; }
         public HazardLights HazardLightsInput { get; private set; }
         public bool SwitchAutonomous { get; private set; }
-        public float TargetLinearVelocity => 0f;  // Keyboard input uses direct accel/steer, not velocity targets
-        public float TargetYawRate => 0f;
+        public float TargetLinearVelocity { get; private set; }   // [m/s]
+        public float TargetYawRate { get; private set; }          // [rad/s], positive = left (counter-clockwise)
+
+        [Header("Velocity targets (differential drive)")]
+        [SerializeField, Tooltip("Linear velocity while up/down is held [m/s]")] float _linearVelocity = 0.5f;
+        [SerializeField, Tooltip("Yaw rate while left/right is held [rad/s]")] float _yawRate = 0.5f;
+        [SerializeField, Tooltip("Factor while the fast key is held")] float _fastMultiplier = 2f;
+        [SerializeField] KeyCode _fastKey = KeyCode.LeftShift;
 
         [SerializeField] KeyCode _accelerationKey = KeyCode.UpArrow;
         [SerializeField] KeyCode _decelerationKey = KeyCode.DownArrow;
@@ -74,33 +86,24 @@ namespace Awsim.Entity
             if (Input.GetKey(_switchAutonomousKey))
                 SwitchAutonomous = true;
 
-            // Get acceleration.
+            // Velocity targets. Acceleration / steering inputs are not used by the differential
+            // drive; they stay 0 so that the vehicle behaves as with cmd_vel.
+            AccelerationInput = 0f;
+            SteerAngleInput = 0f;
+            float scale = Input.GetKey(_fastKey) ? _fastMultiplier : 1f;
+            float v = 0f, w = 0f;
             if (Input.GetKey(_accelerationKey))
-            {
-                AccelerationInput = 1f;                           // TODO: Adjusting input value.
-                isOverridden = true;
-            }
-            else if (Input.GetKey(_decelerationKey))
-            {
-                AccelerationInput = -1f;                          // TODO: Adjusting input value.
-                isOverridden = true;
-            }
-            else
-                AccelerationInput = 0;
-
-            // Get steering.
+                v += _linearVelocity;
+            if (Input.GetKey(_decelerationKey))
+                v -= _linearVelocity;
             if (Input.GetKey(_leftSteeringKey))
-            {
-                SteerAngleInput = -35f;                             // TODO: Adjusting input value.
-                isOverridden = true;
-            }
-            else if (Input.GetKey(_rightSteeringKey))
-            {
-                SteerAngleInput = 35f;                              // TODO: Adjusting input value.
-                isOverridden = true;
-            }
-            else
-                SteerAngleInput = 0;
+                w += _yawRate;
+            if (Input.GetKey(_rightSteeringKey))
+                w -= _yawRate;
+            TargetLinearVelocity = v * scale;
+            TargetYawRate = w * scale;
+            isOverridden = Input.GetKey(_accelerationKey) || Input.GetKey(_decelerationKey)
+                || Input.GetKey(_leftSteeringKey) || Input.GetKey(_rightSteeringKey);
 
             // Get shift.
             if (Input.GetKey(_driveGearKey))

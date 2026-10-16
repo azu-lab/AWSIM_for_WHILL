@@ -17,6 +17,7 @@ import time
 
 import numpy as np
 import rclpy
+import rclpy.executors
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from nav_msgs.msg import Odometry
@@ -79,7 +80,10 @@ def main():
 
     rclpy.init()
     node = Check(args.topic)
-    threading.Thread(target=rclpy.spin, args=(node,), daemon=True).start()
+    executor = rclpy.executors.SingleThreadedExecutor()
+    executor.add_node(node)
+    spin_thread = threading.Thread(target=executor.spin, daemon=True)
+    spin_thread.start()
 
     counts = []
     t0 = time.time()
@@ -113,6 +117,8 @@ def main():
     median = sorted(counts)[len(counts) // 2]
     passed = median >= args.min_points
     print(f"{'PASS' if passed else 'FAIL'}  median {median} points on the WHILL (threshold {args.min_points})")
+    executor.shutdown()   # stop spinning before destroying the node
+    spin_thread.join(timeout=2.0)
     node.destroy_node()
     rclpy.shutdown()
     sys.exit(0 if passed else 1)

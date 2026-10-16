@@ -20,6 +20,7 @@ import threading
 import time
 
 import rclpy
+import rclpy.executors
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import Twist, Point, Pose
@@ -110,7 +111,10 @@ def main():
 
     rclpy.init()
     node = EpisodeTest()
-    threading.Thread(target=rclpy.spin, args=(node,), daemon=True).start()
+    executor = rclpy.executors.SingleThreadedExecutor()
+    executor.add_node(node)
+    spin_thread = threading.Thread(target=executor.spin, daemon=True)
+    spin_thread.start()
 
     start = time.time()
     while node.pose is None and time.time() - start < 15.0:
@@ -185,6 +189,8 @@ def main():
         print("FAIL  no /awsim/goal_position received")
         failures += 1
 
+    executor.shutdown()   # stop spinning before destroying the node
+    spin_thread.join(timeout=2.0)
     node.destroy_node()
     rclpy.shutdown()
     sys.exit(1 if failures else 0)
