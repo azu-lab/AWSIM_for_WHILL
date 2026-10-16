@@ -4,7 +4,7 @@
 #
 #   scripts/ros2_shell.sh                                   # interactive shell
 #   scripts/ros2_shell.sh ros2 topic list
-#   IMAGE=awsim-for-whill/dreamer scripts/ros2_shell.sh python3 rl/scripts/random_agent.py
+#   IMAGE=awsim-for-whill/dreamer scripts/ros2_shell.sh python3 rl/evaluate.py --agent random
 #
 # Build the images first (see docker/compose.yaml): ros2, then dreamer.
 set -euo pipefail
@@ -21,7 +21,10 @@ done
 if [[ $# -eq 0 ]]; then
     set -- bash
 fi
-exec docker run --rm "${TTY_ARGS[@]}" "${GPU_ARGS[@]}" \
+# CONTAINER_NAME: name the container (e.g. to stop a background command with docker rm -f)
+NAME_ARGS=()
+[[ -n "${CONTAINER_NAME:-}" ]] && NAME_ARGS=(--name "${CONTAINER_NAME}")
+exec docker run --rm "${TTY_ARGS[@]}" "${GPU_ARGS[@]}" "${NAME_ARGS[@]}" \
     --network host --ipc host \
     -e ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-0}" \
     -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \

@@ -1,0 +1,67 @@
+# Conditions of the resource measurement (scripts/bench_resources.sh, docs/RESOURCE_USAGE.md).
+#
+# How much RAM, VRAM, CPU and frame rate does AWSIM need when the number of infrastructure
+# LiDARs or WHILLs grows? The copies are made at start-up by
+# Assets/Awsim/Scripts/Benchmark/ResourceBenchmarkSpawner.cs (environment variables
+# AWSIM_BENCH_*), so the default player build is used as it is.
+bench:
+  # [infrastructure LiDARs, WHILLs]; (1, 1) is shared by both series.
+  conditions:
+    - [1, 1]
+    - [2, 1]
+    - [4, 1]
+    - [8, 1]
+    - [16, 1]
+    - [1, 2]
+    - [1, 4]
+    - [1, 8]
+    - [1, 16]
+
+  # Vehicle LiDAR (VLP16 of the WHILL prefab): false = switched off on every WHILL during the
+  # measurement, so that a WHILL is the vehicle with its 1920x1080 camera only.
+  vehicle_lidar: false
+
+  # Distance between LiDAR copies along the WHILL heading [m] (same height and orientation).
+  lidar_spacing: 4.0
+
+  # Places of the WHILL copies, relative to the WHILL of the scene (Unity (-30, z -140) in West
+  # Shinjuku, heading Unity +z): [forward, right] [m]. On the sidewalk, at least 2.4 m from each
+  # other, from the cardboard box of the RL task and from the shrub planter; the first ones
+  # are used when fewer WHILLs are measured.
+  whill_positions:
+    - [3, 0]
+    - [6, 0]
+    - [9, 0]
+    - [15, 0]
+    - [18, 0]
+    - [21, 0]
+    - [-4, 0]
+    - [-7, 0]
+    - [3, -2.8]
+    - [6, -2.8]
+    - [9, -2.8]
+    - [21, -2.8]
+    - [24, -2.8]
+    - [24, 0]
+    - [27, 0]
+
+  # Command to all WHILLs (all subscribe /whill/controller/cmd_vel): spin in place, so that every
+  # WHILL drives both wheels and its camera keeps rendering without leaving its place.
+  command:
+    linear: 0.0    # [m/s]
+    angular: 0.5   # [rad/s]
+
+  timing:          # [s], the same for every condition
+    boot_timeout: 180       # until the OptimizerBridge (127.0.0.1:50051) listens
+    settle: 10              # after that, before the command starts
+    warmup: 60              # command running before the recording starts
+    topic_check_after: 15   # after the command start: count the sensor topics ...
+    topic_check_duration: 6 # ... for this long
+    measure: 60             # recording
+    sample_interval: 1
+    cooldown: 10            # after AWSIM exited, before the next condition
+
+  checks:                   # below these the unit is reported as "not running" (measurement continues)
+    min_lidar_hz: 5.0
+    min_camera_hz: 3.0
+    min_whill_yaw_rate: 0.2  # [rad/s]
