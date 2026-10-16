@@ -75,7 +75,8 @@ crashlytics-build.properties
 
 # AWSIM for WHILL: generated files
 /logs/
-/data/
+/data/*
+!/data/real_whill/
 /outputs/
 __pycache__/
 *.pyc
@@ -83,3 +84,9 @@ __pycache__/
 /optuna_study.db
 /optimization_results.json
 /visualization/
+
+# trained models downloaded by scripts/fetch_pretrained.sh or written by rl/tools/export_checkpoint.py
+/pretrained/
+
+# Mono crash dumps of the Unity Editor
+mono_crash.*
