@@ -34,12 +34,13 @@ def test_vehicle_yaml_only_uses_settable_parameters(path):
     assert set(params) <= SETTABLE, set(params) - SETTABLE
 
 
-def test_optimized_parameters_are_inside_the_search_space():
+@pytest.mark.parametrize("name", ["whill_model_cr_optimized_4scenario_v2.yaml", "whill_model_cr_optimized_3scenario_v2.yaml"])
+def test_optimized_parameters_are_inside_the_search_space(name):
     with open(DEFAULT_SEARCH_SPACE) as f:
         space = yaml.safe_load(f)["parameters"]
-    params = load_params(VEHICLE_DIR / "whill_model_cr_optimized_3scenario_v2.yaml")
-    for name, value in params.items():
-        assert space[name]["low"] <= value <= space[name]["high"], name
+    params = load_params(VEHICLE_DIR / name)
+    for key, value in params.items():
+        assert space[key]["low"] <= value <= space[key]["high"], key
 
 
 def test_initial_parameters_are_the_search_space_defaults():

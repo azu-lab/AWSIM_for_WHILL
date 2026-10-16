@@ -1,4 +1,5 @@
 # WHILL Model CR - best parameters of the 3-scenario optimization (straight, turn, circle).
+# Kept for comparison; the default is whill_model_cr_optimized_4scenario_v2.yaml.
 # Source: soturon/optimize parameter/3senario_v2.yaml (e91b33f).
 # Optuna study 3scenario_v2.db: 500 trials (488 complete, 12 pruned), best = trial #426,
 # objective = sum of trajectory RMSE over the 3 scenarios = 0.0899 m (trial 0: 1.411 m).

@@ -1,8 +1,11 @@
 # Search space of the vehicle parameter optimization (Optuna TPE).
 #
-# Ranges are the ones recorded in the Optuna storage of the study that produced
-# config/vehicle/whill_model_cr_optimized_3scenario_v2.yaml (3scenario_v2.db,
-# trial_params.distribution_json), i.e. the search space of soturon commit 43b63ef.
+# Ranges are the ones recorded in the Optuna storages of the studies that produced
+# config/vehicle/whill_model_cr_optimized_4scenario_v2.yaml (4scenario_v2.db, the default) and
+# whill_model_cr_optimized_3scenario_v2.yaml (3scenario_v2.db), identical in both
+# (trial_params.distribution_json), i.e. the search space of soturon commit 43b63ef.
+# The defaults are the initial values of Table II of the paper (rolling_resistance 0.002; the
+# trial #0 of both studies used 0.02).
 #
 # NOTE: DEFAULT_PARAMETER_RANGES in optimizer/whill_optimizer/optimizer.py (soturon
 # e91b33f, kept unchanged) differs only in the center of mass:
@@ -29,7 +32,7 @@ parameters:
   wheel_integral_clamp:      {low: 0.1,  high: 3.0,  default: 0.5}
   # Drag
   air_drag:                  {low: 0.1,  high: 1.5,  default: 0.2}
-  rolling_resistance:        {low: 0.0,  high: 0.05, default: 0.02}
+  rolling_resistance:        {low: 0.0,  high: 0.05, default: 0.002}   # paper Table II (soturon: 0.02)
   frontal_area:              {low: 0.4,  high: 1.2,  default: 0.8}
   # Center of mass in the vehicle frame (Unity axes: x = right, y = up, z = forward) [m]
   com_offset_x:              {low: -0.25, high: 0.25, default: 0.0}

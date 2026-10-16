@@ -1,7 +1,7 @@
 # WHILL Model CR - parameters of the scene of soturon/optimize e91b33f, the state used for
 # all its later experiments (including the DreamerV3 training).
 # Read back from a running AWSIM with `python3 -m whill_optimizer get-params` before the
-# default of WhillModelCR.prefab was changed to whill_model_cr_optimized_3scenario_v2.yaml.
+# default of WhillModelCR.prefab was changed (now: whill_model_cr_optimized_4scenario_v2.yaml).
 # Apply it to reproduce soturon:
 #   python3 -m whill_optimizer apply-params --yaml ../config/vehicle/whill_model_cr_soturon_scene.yaml
 #

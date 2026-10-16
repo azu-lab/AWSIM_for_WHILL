@@ -174,7 +174,7 @@ Rigidbody:
   m_Mass: 50
   m_Drag: 0
   m_AngularDrag: 0
-  m_CenterOfMass: {x: 0.0048921145, y: 0.14381754, z: -0.26661173}
+  m_CenterOfMass: {x: 0.0044573617, y: 0.12154174, z: -0.26547879}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
@@ -203,8 +203,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rigidbody: {fileID: 2886195142570798319}
-  _skiddingCancelRate: 33.554504
-  _frontWheelSkiddingRate: 1.1052157
+  _skiddingCancelRate: 34.790068
+  _frontWheelSkiddingRate: 0.40560326
   _frontAxle:
     _leftWheel:
       _wheelCollider: {fileID: 3175533467972939808}
@@ -229,17 +229,17 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  _forwardSlipMultiplier: 0.8068368
+  _forwardSlipMultiplier: 0.84004636
   _treadWidth: 0.496
-  _wheelKp: 27.81741
-  _wheelKi: 0.8199443
-  _wheelKd: 1.002646
-  _wheelIntegralClamp: 0.2580943
+  _wheelKp: 27.699972
+  _wheelKi: 0.40250112
+  _wheelKd: 0.73839092
+  _wheelIntegralClamp: 1.4313239
   _enableDebugLogs: 1
   _maxSpeed: 1.667
-  _airDrag: 0.4388446
-  _rollingResistance: 0.004417808
-  _frontalArea: 0.9718794
+  _airDrag: 1.1324312
+  _rollingResistance: 0.0033877346
+  _frontalArea: 1.0614818
   _useVelocityControl: 0
   _velCtrlEnableEps: 0.0001
 --- !u!114 &8598014506364884530

@@ -1,0 +1,21 @@
+# WHILL Model CR - best parameters of the 4-scenario optimization (straight, turn, circle, s_curve).
+# Default of this repository (WhillModelCR.prefab). These are the optimized values of Table II of
+# the paper (arXiv:2609.28969).
+# Source: soturon/optimize parameter/4scenario_v2.yaml (e91b33f).
+# Optuna study 4scenario_v2.db: 500 trials (496 complete, 4 pruned), best = trial #392,
+# objective = sum of trajectory RMSE over the 4 scenarios = 0.1997 m
+# (straight 0.0520, turn 0.0025, circle 0.0377, s_curve 0.1075; trial 0: 1.852 m).
+vehicle_params:
+    skidding_cancel_rate: 34.790068072114295
+    front_wheel_skidding_rate: 0.40560326281754666
+    forward_slip_multiplier: 0.8400463575980736
+    wheel_kp: 27.699971736940487
+    wheel_ki: 0.4025011184045878
+    wheel_kd: 0.7383909169240773
+    wheel_integral_clamp: 1.4313239128976685
+    air_drag: 1.1324312485589616
+    rolling_resistance: 0.0033877346226471677
+    frontal_area: 1.0614817698650143
+    com_offset_x: 0.004457361676858353
+    com_offset_y: 0.12154173791796881
+    com_offset_z: -0.26547879236387406
