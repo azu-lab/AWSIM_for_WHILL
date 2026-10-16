@@ -40,6 +40,11 @@ def cmd_optimize(args):
         search_space_path=args.search_space,
     )
     
+    # SQLite cannot create the database in a directory that does not exist
+    for path in (args.db_path, args.results_json):
+        Path(path).resolve().parent.mkdir(parents=True, exist_ok=True)
+    Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+
     print("=" * 60)
     print("AWSIM Parameter Optimization")
     print("=" * 60)

@@ -360,6 +360,13 @@ class AWSimOptimizer:
             rclpy.shutdown()
         except:
             pass
+        # Wait for the spin thread to return before the node is torn down; leaving it running
+        # made the process crash (exit 139) at interpreter exit.
+        self.ros2_thread.join(timeout=2.0)
+        try:
+            self.ros2.destroy_node()
+        except Exception:
+            pass
             
     def ros2_spin(self):
         """ROS2ノードをスピンさせる"""

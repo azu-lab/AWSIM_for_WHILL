@@ -78,18 +78,25 @@ class BatchEvaluator:
         if not rclpy.ok():
             rclpy.init()
         self.ros2 = ROS2Handler()
+        self._spinning = True
         self.ros2_thread = threading.Thread(target=self._ros2_spin, daemon=True)
         self.ros2_thread.start()
         time.sleep(1.0)
     
     def _ros2_spin(self):
         """ROS2スピンループ"""
-        while rclpy.ok():
+        while self._spinning and rclpy.ok():
             rclpy.spin_once(self.ros2, timeout_sec=0.01)
     
     def _shutdown_ros2(self):
         """ROS2シャットダウン"""
         if self.ros2:
+            # Stop the spin thread before destroying the node: destroying a node that is
+            # being spun in another thread crashed the process (exit 139) after the results
+            # were written.
+            self._spinning = False
+            if getattr(self, 'ros2_thread', None) is not None:
+                self.ros2_thread.join(timeout=2.0)
             try:
                 self.ros2.stop_vehicle()
                 self.ros2.destroy_node()
