@@ -13,6 +13,8 @@
 AWSIM（TIER IV / Autoware Foundation）のコミット `fa1dc65`（v2.0.0 と v2.0.1 の間）からの派生物です。
 WHILL Model CR の元の 3D モデルは**含まれません**。車両の見た目は Unity のプリミティブで作った代替モデルで、物理は元のプレハブと同一です。
 
+論文：S. Amano and T. Azumi, "Sim-to-Real Aware End-to-End Learning Environment for Micromobility," [arXiv:2609.28969](https://arxiv.org/abs/2609.28969), 2026（引用の形式は[引用](#引用)を参照）。
+
 ![西新宿の WHILL Model CR（代替モデル）](docs/images/whill_model_cr_shinjuku.png)
 
 英語版 [README.md](README.md) が正本です。実際に何をどう確認したかは [docs/TEST_REPORT.md](docs/TEST_REPORT.md) にあります。
@@ -205,7 +207,7 @@ $D python3 rl/evaluate.py --logdir logs/rl/shinjuku_box --episodes 10
 $D tensorboard --logdir logs/rl --bind_all                                  # http://localhost:6006
 ```
 
-`shinjuku_box` は、**論文（arXiv:2609.28969）の投稿時には行っていない新しいタスク**です。
+`shinjuku_box` は、**論文（[arXiv:2609.28969](https://arxiv.org/abs/2609.28969)）の投稿時には行っていない新しいタスク**です。
 論文のシミュレーションでの障害物回避の設定とは、次の点が異なります。
 
 - 速度の上限：このタスクは 0.3 m/s・0.6 rad/s で後退なし（論文は 1.0 m/s・1.0 rad/s で後退あり）
@@ -347,6 +349,22 @@ Unity Editor（`scripts/open_editor.sh`）で追加すれば複数台にでき�
 - 強化学習の学習は、既定タスクで DreamerV3 を 1 回（乱数シード 1 つ）回しただけです。ほかのタスクは、台本どおりの制御器とランダム行動でのみ確認しています。RTX 50 系では DreamerV3 を float32 で計算します。
 - 障害物はシーンのオブジェクトです。エピソードごとに Python から配置することはできません（シーン側の乱数配置のみ）。
 - プレイヤー画面の追従カメラは、並木や壁に隠れることがあります（Follow camera の UI で調整します）。
+
+## 引用
+
+このリポジトリを使う場合は、次の論文を引用してください。
+
+```bibtex
+@misc{amano2026simtoreal,
+  title         = {Sim-to-Real Aware End-to-End Learning Environment for Micromobility},
+  author        = {Amano, Shouma and Azumi, Takuya},
+  year          = {2026},
+  eprint        = {2609.28969},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.RO},
+  url           = {https://arxiv.org/abs/2609.28969}
+}
+```
 
 ## ライセンス
 

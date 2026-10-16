@@ -12,6 +12,9 @@ Foundation), commit `fa1dc65` (between v2.0.0 and v2.0.1). The original 3D model
 WHILL Model CR is **not included**; the vehicle uses a placeholder made of Unity primitives with
 the same physics.
 
+Paper: S. Amano and T. Azumi, "Sim-to-Real Aware End-to-End Learning Environment for
+Micromobility," [arXiv:2609.28969](https://arxiv.org/abs/2609.28969), 2026 (see [Citation](#citation)).
+
 ![WHILL Model CR placeholder in West Shinjuku](docs/images/whill_model_cr_shinjuku.png)
 
 *The WHILL Model CR placeholder (Unity primitives, with the vehicle-mounted VLP16) at its start
@@ -263,7 +266,7 @@ $D tensorboard --logdir logs/rl --bind_all                                  # ht
 ```
 
 `shinjuku_box` is a **new task that was not part of the experiments at the time of the paper
-submission** (arXiv:2609.28969). It differs from the simulated obstacle-avoidance setting of the
+submission** ([arXiv:2609.28969](https://arxiv.org/abs/2609.28969)). It differs from the simulated obstacle-avoidance setting of the
 paper in the velocity limits (here 0.3 m/s and 0.6 rad/s without reverse; paper 1.0 m/s and
 1.0 rad/s with reverse) and in the smoothness term (here −1.0·|a_ω,t − a_ω,t−1| on the
 normalized angular action at every non-terminal step; paper −1.0·|ω_t − ω_t−1| on the angular
@@ -434,6 +437,22 @@ but unused. Upstream documentation is not included (license). Details:
 - The placeholder model changes what LiDARs and cameras see of the WHILL itself (not its physics).
 - In the player window the follow camera (6 m behind, 3 m above the WHILL) can be blocked by trees
   or walls; use the "Follow camera" UI (shift + mouse wheel to zoom) or the Editor scene view.
+
+## Citation
+
+If you use this repository, please cite the paper:
+
+```bibtex
+@misc{amano2026simtoreal,
+  title         = {Sim-to-Real Aware End-to-End Learning Environment for Micromobility},
+  author        = {Amano, Shouma and Azumi, Takuya},
+  year          = {2026},
+  eprint        = {2609.28969},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.RO},
+  url           = {https://arxiv.org/abs/2609.28969}
+}
+```
 
 ## License
 
