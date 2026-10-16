@@ -41,7 +41,7 @@ https://creativecommons.org/licenses/by-nc/4.0/legalcode
 
 It was trained on camera images rendered from the West Shinjuku map of AWSIM
 (TIER IV, Inc. / Autoware Foundation, CC BY-NC), with the code of AWSIM for WHILL
-(https://github.com/shoumexi-03/AWSIM_for_WHILL, Apache License 2.0) and DreamerV3
+(https://github.com/azu-lab/AWSIM_for_WHILL, Apache License 2.0) and DreamerV3
 (https://github.com/danijar/dreamerv3, MIT License).
 
 Attribution: "AWSIM for WHILL - DreamerV3 policy, shoumexi-03, CC BY-NC 4.0".

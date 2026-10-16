@@ -12,7 +12,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NAME="${PRETRAINED_NAME:-shinjuku_box_dreamerv3}"
 TAG="${PRETRAINED_TAG:-pretrained-v1}"
-BASE_URL="${PRETRAINED_BASE_URL:-https://github.com/shoumexi-03/AWSIM_for_WHILL/releases/download/${TAG}}"
+BASE_URL="${PRETRAINED_BASE_URL:-https://github.com/azu-lab/AWSIM_for_WHILL/releases/download/${TAG}}"
 DEST="${REPO_ROOT}/pretrained"
 mkdir -p "${DEST}"
 

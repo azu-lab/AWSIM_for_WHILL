@@ -60,7 +60,7 @@ WHILL Model CR の元の 3D モデルは**含まれません**。車両の見た
 ## 導入
 
 ```bash
-git clone --recurse-submodules https://github.com/shoumexi-03/AWSIM_for_WHILL.git
+git clone --recurse-submodules https://github.com/azu-lab/AWSIM_for_WHILL.git
 cd AWSIM_for_WHILL
 sudo sysctl -w net.core.rmem_max=2147483647   # 大きな点群用（推奨）
 

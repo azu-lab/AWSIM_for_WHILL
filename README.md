@@ -61,7 +61,7 @@ Tested configuration (others are untested):
 
 ```bash
 # 1. Clone (with the DreamerV3 submodule)
-git clone --recurse-submodules https://github.com/shoumexi-03/AWSIM_for_WHILL.git
+git clone --recurse-submodules https://github.com/azu-lab/AWSIM_for_WHILL.git
 cd AWSIM_for_WHILL
 
 # 2. Unity 6000.0.34f1: install with Unity Hub (Installs > Install Editor > Archive), add the
