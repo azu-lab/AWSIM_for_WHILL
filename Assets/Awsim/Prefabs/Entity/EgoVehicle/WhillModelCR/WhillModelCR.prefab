@@ -1654,8 +1654,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0079a528b20481f19da29bc8bdc90ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _imageTopic: /sensing/camera/traffic_light/image_raw
-  _cameraInfoTopic: /sensing/camera/traffic_light/camera_info
+  _imageTopic: /sensing/camera/front/image_raw
+  _cameraInfoTopic: /sensing/camera/front/camera_info
   _frameId: traffic_light_left_camera/camera_link
   _qosSettings:
     _reliabilityPolicy: 2
@@ -3350,7 +3350,7 @@ MonoBehaviour:
   topicName: /ground_truth/odom
   frameId: map
   childFrameId: base_link
-  frequency: 30
+  frequency: 20
 --- !u!1 &8084709936904532158
 GameObject:
   m_ObjectHideFlags: 0

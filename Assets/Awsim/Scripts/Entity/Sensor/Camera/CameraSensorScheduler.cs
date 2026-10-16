@@ -42,6 +42,10 @@ namespace Awsim.Entity
 
         IEnumerator SequentialRender()
         {
+            // Renders on an absolute schedule (every 1 / _outputHz s of game time). Waiting
+            // 1 / _outputHz after the render frames made the period longer than set
+            // (7.7 Hz instead of 10 Hz at about 70 fps).
+            float next = Time.time;
             while (true)
             {
                 for (int i = 0; i < _schedulableCameraSensors.Length; i++)
@@ -50,7 +54,11 @@ namespace Awsim.Entity
                     yield return null;                          // wait for 1 frame
                 }
 
-                yield return new WaitForSeconds(1f / _outputHz);
+                next += 1f / _outputHz;
+                if (Time.time > next)
+                    next = Time.time;                           // fell behind (low frame rate): no burst
+                while (Time.time < next)
+                    yield return null;
             }
         }
     }

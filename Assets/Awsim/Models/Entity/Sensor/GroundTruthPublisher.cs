@@ -7,7 +7,7 @@ public class GroundTruthPublisher : MonoBehaviour
     public string topicName = "/ground_truth/odom";
     public string frameId = "map";
     public string childFrameId = "base_link";
-    public float frequency = 30.0f;
+    public float frequency = 20.0f;
 
     private ROS2Node ros2Node;
     private IPublisher<nav_msgs.msg.Odometry> odomPublisher;
@@ -64,9 +64,12 @@ public class GroundTruthPublisher : MonoBehaviour
         if (odomPublisher == null || rb == null) return;
 
         // 3. 配信処理
+        // Keep the remainder, so that the rate is the set frequency (resetting to 0 gave 23 Hz for 30 Hz)
         timeElapsed += Time.deltaTime;
-        if (timeElapsed < (1.0f / frequency)) return;
-        timeElapsed = 0;
+        float period = 1.0f / frequency;
+        if (timeElapsed < period) return;
+        timeElapsed -= period;
+        if (timeElapsed > period) timeElapsed = 0;   // fell behind (low frame rate): no burst
 
         nav_msgs.msg.Odometry msg = new nav_msgs.msg.Odometry();
         
