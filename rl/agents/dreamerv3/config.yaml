@@ -1,0 +1,49 @@
+# Configuration of the DreamerV3 agent (agents/dreamerv3/agent.py).
+#
+# Everything except `loop` overrides the defaults of DreamerV3
+# (third_party/dreamerv3/dreamerv3/configs.yaml, section "defaults").
+# The values are those of soturon (e91b33f, rl/configs/awsim_obstacle_avoidance.yaml there).
+# Change them with --agent-config FILE or --set key=value (e.g. --set batch_size=8).
+#
+# soturon's file also had opt.{actor,critic,model}_lr and expl.expl_amount. These keys do not
+# exist in this DreamerV3 version (the learning rate is agent.opt.lr, default 4e-5), so they had
+# no effect and are not repeated here.
+
+# Settings of the training loop of this repository (not DreamerV3 keys)
+loop:
+  train_every: 2          # one gradient step every N environment steps (soturon: 2)
+  log_every: 100          # [env steps] write the DreamerV3 losses
+  report_every: 10000     # [env steps] world-model reconstructions (TensorBoard images)
+  compute_dtype: null     # null: jax.compute_dtype below; float32 on GPUs with compute capability >= 12 (jax_compat.py)
+  history: 100            # episodes of the moving success / collision rates
+
+seed: 0
+batch_size: 16
+batch_length: 64
+
+replay:
+  size: 1000000
+  online: True
+
+agent:
+  enc:
+    simple:
+      depth: 32
+  dec:
+    simple:
+      depth: 32
+  dyn:
+    rssm:
+      deter: 512
+      stoch: 64
+      classes: 32
+  policy:
+    layers: 4
+    units: 256
+  value:
+    layers: 4
+    units: 256
+
+jax:
+  platform: cuda
+  compute_dtype: float16

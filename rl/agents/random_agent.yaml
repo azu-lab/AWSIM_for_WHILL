@@ -1,0 +1,3 @@
+mode: random          # random | constant
+constant: [1.0, 0.0]  # action of mode "constant": full speed ahead, no turn
+seed: 0

@@ -1,0 +1,30 @@
+# Reach a goal 5 m ahead, without obstacles, at the start pose of the parameter optimization in
+# West Shinjuku (the "original" task of soturon: 1.0 m/s, goal radius 0.75 m, steering penalty).
+# Start pose = scene placement of the WHILL (Unity (-30, -7.37, -140); base_link is 0.30 m behind
+# the vehicle root), goal = scene placement of the object "goal" (Unity (-30, -7.50, -135)).
+# They are given explicitly because a previous task may have moved them in the running AWSIM.
+name: shinjuku_goal
+description: West Shinjuku, optimization start pose, goal 5 m ahead, no obstacle
+scene: AutowareSimulationDemo
+
+start:
+  poses:
+    - {x: -140.3, y: 30.0, yaw: 0.0}
+
+goal:
+  position: {x: -135.0, y: 30.0}
+  radius: 0.75
+
+action:
+  max_linear_vel: 1.0
+  max_angular_vel: 1.0
+
+episode:
+  max_steps: 150
+
+reward:
+  goal: 100.0
+  progress: 30.0
+  collision: -50.0
+  time: -0.05
+  smooth: 1.0

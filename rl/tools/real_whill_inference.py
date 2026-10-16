@@ -9,9 +9,12 @@ Twistメッセージで速度指令を送信するROS 2ノード。
   実機PC (カメラ配信) → [ROS 2 DDS] → 推論PC (このスクリプト) → [cmd_vel] → 実機PC
 
 使い方:
-  python scripts/real_whill_inference.py \
-    --logdir /path/to/dreamerv3_logs/obstacle_avoidance \
-    --checkpoint 20000
+  python3 rl/tools/real_whill_inference.py --logdir logs/rl/corridor_box --checkpoint latest
+
+学習時と同じ処理 (rl/whill_env/env.py の process_image / action_to_command) で観測と速度指令を作るので、
+シミュレータと実機で方策への入出力が一致する。モデルは rl/agents/ のどのエージェントでもよい
+(run.yaml に記録されたエージェントを checkpoints/<名前> から読み込む)。速度の上限は学習したタスク
+(<logdir>/task.yaml) の値が既定値。
 """
 
 import os
@@ -30,11 +33,14 @@ import cv2
 import subprocess
 from datetime import datetime
 
-# Add paths
-# rl/ (awsim_dreamerv3) と third_party/dreamerv3 を import できるようにする
+# rl/ (whill_env, agents) を import できるようにする
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / 'rl'))
-sys.path.insert(0, str(REPO_ROOT / 'third_party' / 'dreamerv3'))
+
+import yaml  # noqa: E402
+import agents  # noqa: E402
+from whill_env import load_task, make_env  # noqa: E402
+from whill_env.env import action_to_command, process_image  # noqa: E402
 
 import rclpy
 from rclpy.node import Node
@@ -56,7 +62,7 @@ class RealWhillInferenceNode(Node):
     def __init__(
         self,
         agent,
-        agent_state,
+        obs_keys,
         camera_topic: str,
         cmd_vel_topic: str,
         max_linear_vel: float,
@@ -72,7 +78,8 @@ class RealWhillInferenceNode(Node):
         super().__init__('real_whill_inference')
 
         self._agent = agent
-        self._agent_state = agent_state
+        self._obs_keys = list(obs_keys)
+        self._last_action = None
         self._max_linear_vel = max_linear_vel
         self._max_angular_vel = max_angular_vel
         self._control_hz = control_hz
@@ -279,61 +286,32 @@ class RealWhillInferenceNode(Node):
         if self._latest_image is None:
             return
 
-        # ----- 画像の前処理 -----
-        image = self._latest_image.copy()
-
-        # 64x64にリサイズ
-        h, w = image.shape[:2]
-        if (h, w) != self._image_size:
-            image = cv2.resize(
-                image,
-                (self._image_size[1], self._image_size[0]),
-                interpolation=cv2.INTER_AREA
-            )
-            if self._step_count == 0:
-                self.get_logger().info(
-                    f"Image resized: ({w}, {h}) -> ({self._image_size[1]}, {self._image_size[0]})"
-                )
-        elif self._step_count == 0:
-            self.get_logger().info(f"Image already {self._image_size}, no resize needed")
-
-        image = np.asarray(image, dtype=np.uint8)
-
-        # ----- 観測データの構築 -----
-        # DreamerV3が期待するobs_batchを構築
-        # 学習時と同じキーを含める (is_collision, is_success等)
-        obs_batch = {
-            'image': image[None],                                    # (1, 64, 64, 3)
-            'is_first': np.array([self._is_first_step]),             # (1,)
-            'is_last': np.array([False]),                            # (1,)
-            'is_terminal': np.array([False]),                        # (1,)
-            'reward': np.array([0.0], dtype=np.float32),             # (1,)
-            'is_collision': np.array([0.0], dtype=np.float32),       # (1,)
-            'is_success': np.array([0.0], dtype=np.float32),         # (1,)
-        }
+        # ----- 観測 (学習時と同じ前処理) -----
+        image = process_image(self._latest_image.copy(), self._image_size)
+        if self._step_count == 0:
+            h, w = self._latest_image.shape[:2]
+            self.get_logger().info(f"Image ({w}, {h}) -> {self._image_size[::-1]}")
+        obs = {'image': image,
+               'is_success': np.float32(0.0),
+               'is_collision': np.float32(0.0)}
+        obs = {k: obs[k] for k in self._obs_keys if k in obs}
 
         # ----- 推論 -----
         try:
-            self._agent_state, action, _ = self._agent.policy(
-                self._agent_state, obs_batch, mode='eval'
-            )
+            if self._is_first_step:
+                self._agent.begin_episode(obs, training=False)
+            else:
+                self._agent.observe(self._last_action, 0.0, obs, False, False, {}, training=False)
+            act = self._agent.act(obs, training=False)
         except Exception as e:
             self.get_logger().error(f"Inference error: {e}")
             self._send_stop()
             return
-
-        # 最初のステップの後はis_firstをFalseに
         self._is_first_step = False
+        self._last_action = act
 
-        # ----- アクションのスケーリング -----
-        # action['action'] shape: (1, 2)  → [linear_vel_norm, angular_vel_norm]
-        act = action['action'][0]  # Remove batch dim → (2,)
-        linear_vel = float(act[0]) * self._max_linear_vel
-        angular_vel = float(act[1]) * self._max_angular_vel
-
-        # 前進のみにクランプ (安全のためバックなし)
-        linear_vel = np.clip(linear_vel, 0.0, self._max_linear_vel)
-        angular_vel = np.clip(angular_vel, -self._max_angular_vel, self._max_angular_vel)
+        # ----- 行動 → 速度指令 (学習時と同じ変換, 後退なし) -----
+        linear_vel, angular_vel = action_to_command(act, self._max_linear_vel, self._max_angular_vel)
 
         # ----- Twistメッセージの送信 -----
         msg = Twist()
@@ -489,132 +467,49 @@ class RealWhillInferenceNode(Node):
             self._bag_process = None
 
 
-def load_agent(logdir: Path, checkpoint_step: int):
+def load_agent(logdir: Path, checkpoint: str):
     """
-    DreamerV3 Agentをロードする。
-
-    Args:
-        logdir: 学習ログディレクトリ
-        checkpoint_step: チェックポイントのステップ番号 (0 = finalを使用)
+    train.py の run ディレクトリからエージェントを読み込む。
 
     Returns:
-        (agent, initial_state) のタプル
+        (agent, task)
     """
-    import elements
-    import ruamel.yaml as yaml
-    import pickle
-    from dreamerv3.agent import Agent
-
-    # 設定ファイルのロード
-    config_path = logdir / 'config.yaml'
-    if config_path.exists():
-        print(f"Loading config from {config_path}")
-        config = elements.Config.load(config_path)
-    else:
-        print("Config not found in logdir, loading defaults...")
-        dreamerv3_folder = REPO_ROOT / 'third_party' / 'dreamerv3' / 'dreamerv3'
-        defaults_config = yaml.YAML(typ='safe').load(
-            (dreamerv3_folder / 'configs.yaml').read_text()
-        )
-        config = elements.Config(defaults_config['defaults'])
-        config = config.update({
-            'logdir': str(logdir),
-            'batch_size': 1,
-            'batch_length': 64,
-        })
-
-    # 観測・行動空間の定義 (学習時と一致させる)
-    obs_space = {
-        'image': elements.Space(np.uint8, (64, 64, 3), 0, 255),
-        'is_first': elements.Space(bool, ()),
-        'is_last': elements.Space(bool, ()),
-        'is_terminal': elements.Space(bool, ()),
-        'reward': elements.Space(np.float32, ()),
-        'is_collision': elements.Space(np.float32, ()),
-        'is_success': elements.Space(np.float32, ()),
-    }
-
-    act_space = {
-        'action': elements.Space(np.float32, (2,), -1.0, 1.0),
-    }
-
-    # Agent構築
-    print("Creating DreamerV3 agent...")
-    from awsim_dreamerv3.jax_compat import adjust_jax_config
-    agent_config = elements.Config({
-        **config.agent,
-        'logdir': config.logdir,
-        'seed': config.seed,
-        'jax': adjust_jax_config(config.jax, None),
-        'batch_size': 1,
-        'batch_length': config.batch_length,
-        'replay_context': config.replay_context,
-        'report_length': config.report_length,
-        'replica': 0,
-        'replicas': 1,
-    })
-    agent = Agent(obs_space, act_space, agent_config)
-
-    # チェックポイントのロード
-    checkpoint_dir = logdir / 'agent'
-    if checkpoint_step == 0:
-        checkpoint_path = checkpoint_dir / 'checkpoint_final.pkl'
-    else:
-        checkpoint_path = checkpoint_dir / f'checkpoint_{checkpoint_step}.pkl'
-
-    if not checkpoint_path.exists():
-        # 利用可能なチェックポイントを一覧表示
-        available = sorted(checkpoint_dir.glob('checkpoint_*.pkl'))
-        available_str = ', '.join([p.stem for p in available])
-        raise FileNotFoundError(
-            f"Checkpoint not found: {checkpoint_path}\n"
-            f"Available checkpoints: {available_str}"
-        )
-
-    print(f"Loading checkpoint: {checkpoint_path}")
-    with open(str(checkpoint_path), 'rb') as f:
-        data = pickle.load(f)
-        agent.load(data)
-
-    print("Agent loaded successfully!")
-
-    # 初期状態を生成
-    state = agent.init_policy(batch_size=1)
-
-    return agent, state
+    run = yaml.safe_load((logdir / 'run.yaml').read_text())
+    task = load_task(str(logdir / 'task.yaml'))
+    env = make_env(task)   # 観測・行動空間のため (ROS 2 には接続しない)
+    names = sorted(d.name for d in (logdir / 'checkpoints').iterdir() if d.is_dir())
+    name = names[-1] if checkpoint == 'latest' else checkpoint
+    if name not in names:
+        raise FileNotFoundError(f"checkpoint {name} not found; available: {', '.join(names)}")
+    agent = agents.create_agent(run['agent'], env.observation_space, env.action_space,
+                                run['agent_config'], logdir / 'real_whill')
+    print(f"Loading {run['agent']} checkpoint: {logdir / 'checkpoints' / name}")
+    agent.load(logdir / 'checkpoints' / name)
+    return agent, task
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='DreamerV3 Real WHILL Inference Node',
+        description='Real WHILL inference node (trained agent of rl/train.py)',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用例:
-  # デフォルト設定で実行 (checkpoint_20000)
-  python scripts/real_whill_inference.py
+  # 学習ディレクトリの最新チェックポイント
+  python3 rl/tools/real_whill_inference.py --logdir logs/rl/corridor_box
 
-  # チェックポイントを指定して実行
-  python scripts/real_whill_inference.py --checkpoint 15000
-
-  # finalチェックポイントを使用
-  python scripts/real_whill_inference.py --checkpoint 0
-
-  # カスタム設定
-  python scripts/real_whill_inference.py \\
-    --logdir /path/to/logs \\
-    --checkpoint 20000 \\
-    --max-linear-vel 0.2 \\
-    --control-hz 5
+  # チェックポイントと速度上限を指定
+  python3 rl/tools/real_whill_inference.py --logdir logs/rl/corridor_box \\
+    --checkpoint 000020000 --max-linear-vel 0.2 --control-hz 5
         """
     )
     parser.add_argument(
         '--logdir', type=Path,
-        default=str(REPO_ROOT / 'logs' / 'dreamer' / 'obstacle_avoidance'),
-        help='学習ログディレクトリ'
+        required=True,
+        help='rl/train.py の run ディレクトリ'
     )
     parser.add_argument(
-        '--checkpoint', type=int, default=20000,
-        help='チェックポイントのステップ番号 (0=final)'
+        '--checkpoint', type=str, default='latest',
+        help='<logdir>/checkpoints/ のディレクトリ名 (latest = 最新)'
     )
     parser.add_argument(
         '--camera-topic', type=str, default='/camera/image_cropped',
@@ -625,12 +520,12 @@ def main():
         help='速度指令トピック'
     )
     parser.add_argument(
-        '--max-linear-vel', type=float, default=0.3,
-        help='最大線速度 (m/s)'
+        '--max-linear-vel', type=float, default=None,
+        help='最大線速度 (m/s, 既定: 学習したタスクの action.max_linear_vel)'
     )
     parser.add_argument(
-        '--max-angular-vel', type=float, default=0.6,
-        help='最大角速度 (rad/s)'
+        '--max-angular-vel', type=float, default=None,
+        help='最大角速度 (rad/s, 既定: 学習したタスクの action.max_angular_vel)'
     )
     parser.add_argument(
         '--control-hz', type=float, default=10.0,
@@ -664,7 +559,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("DreamerV3 Real WHILL Inference")
+    print("Real WHILL Inference")
     print("=" * 60)
     print(f"  Log directory:  {args.logdir}")
     print(f"  Checkpoint:     {args.checkpoint}")
@@ -679,9 +574,14 @@ def main():
     print(f"  Odom topic:     {args.odom_topic}")
     print("=" * 60)
 
-    # ----- DreamerV3 Agent のロード -----
-    print("\n[1/2] Loading DreamerV3 agent...")
-    agent, agent_state = load_agent(args.logdir, args.checkpoint)
+    # ----- エージェントのロード -----
+    print("\n[1/2] Loading agent...")
+    agent, task = load_agent(args.logdir, args.checkpoint)
+    if args.max_linear_vel is None:
+        args.max_linear_vel = task.action['max_linear_vel']
+    if args.max_angular_vel is None:
+        args.max_angular_vel = task.action['max_angular_vel']
+    print(f"  Velocity limits: {args.max_linear_vel} m/s, {args.max_angular_vel} rad/s")
 
     # ----- ROS 2 ノードの起動 -----
     print("\n[2/2] Starting ROS 2 inference node...")
@@ -689,7 +589,8 @@ def main():
 
     node = RealWhillInferenceNode(
         agent=agent,
-        agent_state=agent_state,
+        obs_keys=task.observation['keys'],
+        image_size=tuple(task.observation['image_size']),
         camera_topic=args.camera_topic,
         cmd_vel_topic=args.cmd_vel_topic,
         max_linear_vel=args.max_linear_vel,

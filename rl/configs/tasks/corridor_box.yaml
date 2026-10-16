@@ -1,0 +1,33 @@
+# Obstacle avoidance in the corridor scene (WhillCorridor.unity, player
+# Builds/AWSIM_for_WHILL_Corridor; built by WITH_DREAMER=1 scripts/setup.sh).
+# Values of soturon's obstacle_avoidance environment (e91b33f): goal radius 0.5 m, 30 s wall-clock
+# limit, no steering penalty. Start pose and goal are the scene placements of the WHILL and of
+# goal_2 (given explicitly: a previous task may have moved them in the running AWSIM; z = floor
+# height hint, so that the ground search does not stop on something above the corridor). The
+# cardboard box "danbo-ru" is moved and turned by AWSIM at every reset.
+name: corridor_box
+description: corridor of soturon, cardboard box, goal 4.2 m ahead
+scene: WhillCorridor
+
+start:
+  poses:
+    - {x: -0.330, y: 0.306, yaw: 1.680, z: -0.70}
+
+goal:
+  position: {x: -0.562, y: 4.463, z: -0.75}
+  radius: 0.5
+
+action:
+  max_linear_vel: 0.3
+  max_angular_vel: 0.6
+
+episode:
+  max_steps: null
+  timeout_sec: 30.0
+
+reward:
+  goal: 100.0
+  progress: 30.0
+  collision: -50.0
+  time: -0.05
+  smooth: 0.0

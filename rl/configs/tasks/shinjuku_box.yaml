@@ -1,0 +1,46 @@
+# Default task: obstacle avoidance on a sidewalk of West Shinjuku (paper, Sec. IV-C).
+#
+# The WHILL starts on the sidewalk 14 m ahead of the optimization start pose, the goal is 4.5 m
+# ahead, and the cardboard box "TaskObstacles/cardboard_box" of the default scene stands 2.5 m
+# ahead; AWSIM moves it by +-0.4 m (lateral), +-0.5 m (longitudinal) and turns it at every reset.
+# The box is part of the scene: move it, or add more obstacles, in the Unity Editor
+# (docs/DREAMER_TRAINING.md, "Your own task"). Buildings, curbs and shrubs of the map also count
+# as collisions.
+#
+# Copy this file to define a task anywhere in the map. Coordinates: map frame of
+# /ground_truth/odom; a point at Unity (X, Y, Z) in the Editor is map (x=Z, y=-X). Heights are
+# found by AWSIM (ground below x, y).
+name: shinjuku_box
+description: West Shinjuku sidewalk, cardboard box 2.5 m ahead, goal 4.5 m ahead
+scene: AutowareSimulationDemo     # default player, Builds/AWSIM_for_WHILL
+
+start:
+  poses:                          # one is drawn per episode
+    - {x: -126.0, y: 32.8, yaw: 0.0}    # [m] [m] [rad]  (Unity (-32.8, z -126), facing Unity +z)
+  noise: {x: 0.0, y: 0.0, yaw: 0.0}     # uniform +- per episode
+
+goal:
+  ahead: 4.5                      # [m] along the start yaw (or: position: {x: .., y: ..})
+  left: 0.0
+  radius: 1.0                     # [m] success region (paper: 1.0 m)
+
+action:
+  max_linear_vel: 0.3             # [m/s]
+  max_angular_vel: 0.6            # [rad/s]
+  allow_reverse: false
+
+episode:
+  max_steps: 150                  # decision steps (camera frames); paper: 150
+  timeout_sec: null
+
+reward:                           # paper: R = r_goal + r_dist + r_collision + r_time + r_smooth
+  goal: 100.0
+  progress: 30.0
+  collision: -50.0
+  time: -0.05
+  smooth: 1.0
+
+observation:
+  image_size: [64, 64]
+  keys: [image, is_success, is_collision]
+  domain_randomization: false

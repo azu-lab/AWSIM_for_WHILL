@@ -1,0 +1,4 @@
+# Configuration of agents/my_agent.py (template). Add the hyper-parameters of your model here.
+seed: 0
+steering_noise: 0.3     # std of the random steering while training
+buffer_size: 10000
