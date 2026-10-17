@@ -12,6 +12,7 @@
 
 AWSIM（TIER IV / Autoware Foundation）のコミット `fa1dc65`（v2.0.0 と v2.0.1 の間）からの派生物です。
 WHILL Model CR の元の 3D モデルは**含まれません**。車両の見た目は Unity のプリミティブで作った代替モデルで、物理は元のプレハブと同一です。
+WHILL の 3D モデルは別途入手できます（[WHILL の 3D モデル](#whill-の-3d-モデル)を参照）。
 
 論文：S. Amano and T. Azumi, "Sim-to-Real Aware End-to-End Learning Environment for Micromobility," [arXiv:2609.28969](https://arxiv.org/abs/2609.28969), 2026（引用の形式は[引用](#引用)を参照）。
 
@@ -172,6 +173,18 @@ ROS_DOMAIN_ID=77 scripts/open_editor.sh &                       # ドメイン�
 
 Unity Hub から開く場合は、ROS 2 を source していないシェルから起動してください。
 Editor を開いている間は、バッチモードのスクリプト（`setup.sh`、`build_player.sh`、`setup_scenes.sh` など）は実行できません。先に Editor を閉じてください。
+
+## WHILL の 3D モデル
+
+WHILL Model Ci の 3D モデルが Free3D で公開されています：[WHILL Model Ci ultra-portable power wheelchair](https://free3d.com/3d-model/will-model-ci-ultra-portable-power-wheelchair-5378.html)。
+Model CR と Model Ci は外観のベースが同一のため、3D モデルとしては CR と Ci に違いはありません。
+このリポジトリにはモデルを同梱していません。上のページから、そのライセンス条件に従って入手してください。
+使うときは、プレハブの `VisualRoot` の下に `PublicPlaceholderModel` の代わりに置き、モデルのコライダーを外します。
+`VisualRoot` は物理に関与しないため、車両の挙動は変わりません。
+
+![AWSIM に導入した WHILL Model Ci の 3D モデル](docs/images/whill_model_ci_free3d.png)
+
+*WHILL Model Ci の 3D モデルを AWSIM に導入したときの外観の例。*
 
 ## パラメータ最適化
 

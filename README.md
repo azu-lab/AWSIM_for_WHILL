@@ -10,7 +10,8 @@ are set anywhere in West Shinjuku and the model is a replaceable module.
 It is a derivative of [AWSIM](https://github.com/autowarefoundation/AWSIM) (TIER IV / Autoware
 Foundation), commit `fa1dc65` (between v2.0.0 and v2.0.1). The original 3D model of the
 WHILL Model CR is **not included**; the vehicle uses a placeholder made of Unity primitives with
-the same physics.
+the same physics. A 3D model of the WHILL can be obtained separately
+(see [WHILL 3D model](#whill-3d-model)).
 
 Paper: S. Amano and T. Azumi, "Sim-to-Real Aware End-to-End Learning Environment for
 Micromobility," [arXiv:2609.28969](https://arxiv.org/abs/2609.28969), 2026 (see [Citation](#citation)).
@@ -194,6 +195,21 @@ layouts in code (`scripts/setup_scenes.sh`, `scripts/setup_open_field_scene.sh`,
 - base_link = center of the drive axle (`RealAxle_center`).
 
 Details, parameter provenance and the placeholder: [docs/VEHICLE_MODEL.md](docs/VEHICLE_MODEL.md).
+
+### WHILL 3D model
+
+A 3D model of the WHILL Model Ci is available on Free3D:
+[WHILL Model Ci ultra-portable power wheelchair](https://free3d.com/3d-model/will-model-ci-ultra-portable-power-wheelchair-5378.html).
+The Model CR and the Model Ci share the same base exterior, so as a 3D model there is no
+difference between the CR and the Ci.
+The model is not redistributed in this repository; download it from that page under its license
+terms.
+To use it, put it under `VisualRoot` of the prefab in place of `PublicPlaceholderModel` and
+remove any colliders from it; `VisualRoot` carries no physics, so the vehicle behaves the same.
+
+![WHILL Model Ci 3D model in AWSIM](docs/images/whill_model_ci_free3d.png)
+
+*Example of the appearance after importing the WHILL Model Ci 3D model into AWSIM.*
 
 ## Infrastructure LiDAR
 
