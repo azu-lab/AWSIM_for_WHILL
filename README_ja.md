@@ -14,7 +14,7 @@ AWSIM（TIER IV / Autoware Foundation）のコミット `fa1dc65`（v2.0.0 と v
 WHILL Model CR の元の 3D モデルは**含まれません**。車両の見た目は Unity のプリミティブで作った代替モデルで、物理は元のプレハブと同一です。
 WHILL の 3D モデルは別途入手できます（[WHILL の 3D モデル](#whill-の-3d-モデル)を参照）。
 
-論文：S. Amano and T. Azumi, "Sim-to-Real Aware End-to-End Learning Environment for Micromobility," [arXiv:2609.28969](https://arxiv.org/abs/2609.28969), 2026（引用の形式は[引用](#引用)を参照）。
+論文：S. Amano and T. Azumi, "Sim-to-Real Aware End-to-End Learning Environment for Micromobility," 2026 IEEE/RSJ International Conference on Intelligent Robots and Systems（IROS 2026）採択。リンクと DOI は公開され次第掲載します（引用の形式は[引用](#引用)を参照）。
 
 ![西新宿の WHILL Model CR（代替モデル）](docs/images/whill_model_cr_shinjuku.png)
 
@@ -220,7 +220,7 @@ $D python3 rl/evaluate.py --logdir logs/rl/shinjuku_box --episodes 10
 $D tensorboard --logdir logs/rl --bind_all                                  # http://localhost:6006
 ```
 
-`shinjuku_box` は、**論文（[arXiv:2609.28969](https://arxiv.org/abs/2609.28969)）の投稿時には行っていない新しいタスク**です。
+`shinjuku_box` は、**論文（IROS 2026）の投稿時には行っていない新しいタスク**です。
 論文のシミュレーションでの障害物回避の設定とは、次の点が異なります。
 
 - 速度の上限：このタスクは 0.3 m/s・0.6 rad/s で後退なし（論文は 1.0 m/s・1.0 rad/s で後退あり）
@@ -368,16 +368,15 @@ Unity Editor（`scripts/open_editor.sh`）で追加すれば複数台にでき�
 このリポジトリを使う場合は、次の論文を引用してください。
 
 ```bibtex
-@misc{amano2026simtoreal,
-  title         = {Sim-to-Real Aware End-to-End Learning Environment for Micromobility},
-  author        = {Amano, Shouma and Azumi, Takuya},
-  year          = {2026},
-  eprint        = {2609.28969},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.RO},
-  url           = {https://arxiv.org/abs/2609.28969}
+@inproceedings{amano2026simtoreal,
+  title     = {Sim-to-Real Aware End-to-End Learning Environment for Micromobility},
+  author    = {Amano, Shouma and Azumi, Takuya},
+  booktitle = {2026 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year      = {2026}
 }
 ```
+
+論文は IROS 2026 に採択されています。リンクと DOI は公開され次第掲載します。
 
 ## ライセンス
 

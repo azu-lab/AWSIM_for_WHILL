@@ -121,7 +121,7 @@ Runtime-tunable values can be read from a running AWSIM with
 
 The default is **exactly the best result of the 4-scenario optimization** (straight, turn,
 circle, S-curve; `config/vehicle/whill_model_cr_optimized_4scenario_v2.yaml`), the optimized
-values of Table II of the paper (arXiv:2609.28969). The best result of the 3-scenario
+values of Table II of the paper (IROS 2026). The best result of the 3-scenario
 optimization is kept as `whill_model_cr_optimized_3scenario_v2.yaml`. The paper lists the center
 of mass in the vehicle frame of ROS (CoM_x front = Unity z, CoM_y left = Unity −x, CoM_z up =
 Unity y); its CoM_y (+0.0044 m, "left") is the value of Unity x (+0.0045 m, i.e. right).

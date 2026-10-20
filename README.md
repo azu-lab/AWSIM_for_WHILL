@@ -14,7 +14,9 @@ the same physics. A 3D model of the WHILL can be obtained separately
 (see [WHILL 3D model](#whill-3d-model)).
 
 Paper: S. Amano and T. Azumi, "Sim-to-Real Aware End-to-End Learning Environment for
-Micromobility," [arXiv:2609.28969](https://arxiv.org/abs/2609.28969), 2026 (see [Citation](#citation)).
+Micromobility," accepted to the 2026 IEEE/RSJ International Conference on Intelligent Robots and
+Systems (IROS 2026). The link and DOI will be added once the paper is published (see
+[Citation](#citation)).
 
 ![WHILL Model CR placeholder in West Shinjuku](docs/images/whill_model_cr_shinjuku.png)
 
@@ -282,7 +284,7 @@ $D tensorboard --logdir logs/rl --bind_all                                  # ht
 ```
 
 `shinjuku_box` is a **new task that was not part of the experiments at the time of the paper
-submission** ([arXiv:2609.28969](https://arxiv.org/abs/2609.28969)). It differs from the simulated obstacle-avoidance setting of the
+submission** (IROS 2026). It differs from the simulated obstacle-avoidance setting of the
 paper in the velocity limits (here 0.3 m/s and 0.6 rad/s without reverse; paper 1.0 m/s and
 1.0 rad/s with reverse) and in the smoothness term (here −1.0·|a_ω,t − a_ω,t−1| on the
 normalized angular action at every non-terminal step; paper −1.0·|ω_t − ω_t−1| on the angular
@@ -459,16 +461,15 @@ but unused. Upstream documentation is not included (license). Details:
 If you use this repository, please cite the paper:
 
 ```bibtex
-@misc{amano2026simtoreal,
-  title         = {Sim-to-Real Aware End-to-End Learning Environment for Micromobility},
-  author        = {Amano, Shouma and Azumi, Takuya},
-  year          = {2026},
-  eprint        = {2609.28969},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.RO},
-  url           = {https://arxiv.org/abs/2609.28969}
+@inproceedings{amano2026simtoreal,
+  title     = {Sim-to-Real Aware End-to-End Learning Environment for Micromobility},
+  author    = {Amano, Shouma and Azumi, Takuya},
+  booktitle = {2026 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year      = {2026}
 }
 ```
+
+The paper has been accepted to IROS 2026. The link and DOI will be added once it is published.
 
 ## License
 

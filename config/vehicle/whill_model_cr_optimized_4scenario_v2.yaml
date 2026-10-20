@@ -1,6 +1,6 @@
 # WHILL Model CR - best parameters of the 4-scenario optimization (straight, turn, circle, s_curve).
 # Default of this repository (WhillModelCR.prefab). These are the optimized values of Table II of
-# the paper (arXiv:2609.28969).
+# the paper (IROS 2026).
 # Source: soturon/optimize parameter/4scenario_v2.yaml (e91b33f).
 # Optuna study 4scenario_v2.db: 500 trials (496 complete, 4 pruned), best = trial #392,
 # objective = sum of trajectory RMSE over the 4 scenarios = 0.1997 m
